@@ -35,9 +35,9 @@ public class StartScene {
         // Game Mode label and buttons
         Label gameModeLabel = new Label("Choose Game Mode:");
         Button aiButton = new Button("AI");
-        //aiButton.setOnAction(e -> primaryStage.setScene(PlacementScene.getScene(primaryStage, true, clientConnection)));  // Assuming PlacementScene takes Client
+        aiButton.setOnAction(e -> primaryStage.setScene(PlacementScene.getScene(primaryStage, true, clientConnection)));  // Assuming PlacementScene takes Client
         Button pvpButton = new Button("PvP");
-        //pvpButton.setOnAction(e -> primaryStage.setScene(PlacementScene.getScene(primaryStage, false, clientConnection)));
+        pvpButton.setOnAction(e -> primaryStage.setScene(PlacementScene.getScene(primaryStage, false, clientConnection)));
 
         VBox centerBox = new VBox(10);
         centerBox.getChildren().addAll(gameModeLabel, aiButton, pvpButton);
