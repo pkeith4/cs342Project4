@@ -52,6 +52,13 @@ public class UsernameScene {
         VBox layout = new VBox(10, errorMsg, usernameInput, setUsernameButton);
         layout.setAlignment(Pos.CENTER);
         layout.setPadding(new Insets(10));
+
+        // Setting the background image using inline CSS
+        layout.setStyle("-fx-background-image: url('/images/background.png'); " +
+                "-fx-background-size: cover; " +
+                "-fx-background-repeat: no-repeat; " +
+                "-fx-background-position: center center;");
+
         return new Scene(layout, 300, 200);
     }
 
