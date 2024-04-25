@@ -50,9 +50,11 @@ public class ClientThread extends Thread {
                         this.createUsername(message.getUsername());
                         break;
                     case clientMessages.GetQueue message:
+                        this.server.getServerCallback().accept("Incoming get queue request...");
                         this.getQueue();
                         break;
                     case clientMessages.InviteUser message:
+                        this.server.getServerCallback().accept("Incoming invite user request...");
                         this.inviteUser(message.getUsername());
                         break;
                     case clientMessages.SendBoard message:
@@ -184,6 +186,8 @@ public class ClientThread extends Thread {
     // write the queue received from the server to the client
     public void getQueue() {
         serverMessages.GetQueue message = new serverMessages.GetQueue(this.server.getQueue());
+
+        System.out.println(this.getUsername() + ": " + message.getQueue());
         writeToClient(message);
     }
     public void addToQueue() {

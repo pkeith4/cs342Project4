@@ -51,6 +51,7 @@ public class Client extends Thread{
                         onAcceptInviteCallback.accept(message);
                     } else if (obj instanceof serverMessages.GetQueue) {
                         serverMessages.GetQueue message = (serverMessages.GetQueue) obj;
+                        System.out.println("um: " + message.getQueue());
                         getQueueCallback.accept(message);
                     } else if (obj instanceof serverMessages.SendGameReady) {
                         serverMessages.SendGameReady message = (serverMessages.SendGameReady) obj;
@@ -122,6 +123,7 @@ public class Client extends Thread{
     // get the queue of people waiting for a game
     public void getQueue(Consumer<serverMessages.GetQueue> callback) {
         this.getQueueCallback = callback;
+        writeToServer(new clientMessages.GetQueue());
     }
     /*
         wait for server to say an invitation was accepted
@@ -131,6 +133,10 @@ public class Client extends Thread{
      */
     public void onAcceptInvite(Consumer<serverMessages.AcceptInvite> callback) {
         this.onAcceptInviteCallback = callback;
+    }
+    public void inviteUser(String username) {
+        clientMessages.InviteUser message = new clientMessages.InviteUser(username);
+        writeToServer(message);
     }
     // accept the invite from another user
     public void acceptInvite(String username) {

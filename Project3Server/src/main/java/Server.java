@@ -60,8 +60,10 @@ public class Server extends Thread {
     }
 
     public ClientThread getClient(String username) {
+        if (username == null)
+            throw new IllegalStateException("Cannot get client with username null");
        for (ClientThread client : this.clients) { // iterate through clients
-          if (client.getUsername().equals(username)) {
+          if (client.getUsername() != null && client.getUsername().equals(username)) {
               return client;
           }
        }
