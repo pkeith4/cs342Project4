@@ -43,18 +43,6 @@ public class GuiServer extends Application{
 				listItems.getItems().add(formattedTime + ": " + data.toString());
 			});
 		});
-		serverConnection.onClientChange(data -> {
-			Platform.runLater(() -> {
-				activeUsers.getItems().clear(); // clear old user logs
-				activeUsers.getItems().add("User Log:");
-				for (int i = 0; i < data.size(); i++) {
-					String username = data.get(i);
-					if (username == null)
-						username = "Not Set";
-					activeUsers.getItems().add("Client #" + i + " (" + username + ")");
-				}
-			});
-		});
 
 		listItems = new ListView<>();
 		activeUsers = new ListView<>();

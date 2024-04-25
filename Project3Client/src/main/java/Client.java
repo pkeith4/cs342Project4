@@ -88,12 +88,12 @@ public class Client extends Thread{
     }
     // Make a hit on the opponents ship
     public void shoot(int row, int col) {
-        clientMessages.Shoot message = new clientMessages.Shoot(row, col);
+        clientMessages.Shoot message = new clientMessages.Shoot(new gameLogic.Coordinate(row, col));
         writeToServer(message);
     }
     // Send the board to the server
-    public void sendBoard(int[][][] ships) {
-        clientMessages.SendBoard message = new clientMessages.SendBoard(ships);
+    public void sendBoard(gameLogic.Board board) {
+        clientMessages.SendBoard message = new clientMessages.SendBoard(board);
         writeToServer(message);
     }
     /*

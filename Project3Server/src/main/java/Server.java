@@ -9,6 +9,9 @@ public class Server extends Thread {
     private ArrayList<String> usernames;
     private ArrayList<String> queue;
 
+    Server(Consumer<String> callback) {
+       this.serverCallback = callback;
+    }
     @Override
     public void run() {
         ServerSocket socket;

@@ -1,4 +1,5 @@
 import clientMessages.*;
+import gameLogic.Coordinate;
 import gameLogic.GameState;
 import serverMessages.*;
 
@@ -98,14 +99,46 @@ public class ClientThread extends Thread {
         boolean hit = false;
         if (result) {
             hit = true;
-            revealedShip = getRevealedShip(coord);
+            revealedShip = this.getRevealedShip(coord);
         }
         this.sendShoot(coord, hit, revealedShip, gameOver); // send shoot object back to both clients
     }
 
     // helper function to get the revealed ship given a coord of the hit
     private gameLogic.Coordinate[] getRevealedShip(gameLogic.Coordinate coord) {
+        for (gameLogic.Ship ship : this.getPlayer().getBoard().getShips()) {
+             if (this.coordInShip(coord, ship) && ship.isSunk()) { // if coordinate is in ship, assume it was hit | also check that ship was sunk
+                 // convert ship to gameLogic.Coordinate[]
+                 return shipToList(ship);
+             }
+        }
+        return null;
+    }
 
+    private gameLogic.Coordinate[] shipToList(gameLogic.Ship ship) {
+        gameLogic.Coordinate[] list = new gameLogic.Coordinate[ship.getSize()];
+        for (int i = 0; i < ship.getSize(); i++) {
+            int x = ship.getStartX();
+            int y = ship.getStartY();
+            if (ship.isVertical())
+                y += i;
+            else
+                x += i;
+            list[i] = new Coordinate(x, y);
+        }
+        return list;
+    }
+
+    private boolean coordInShip(gameLogic.Coordinate coord, gameLogic.Ship ship) {
+        if (ship.isVertical() && coord.getX() != ship.getStartX()) return false;
+        if (!ship.isVertical() && coord.getY() != ship.getStartY()) return false;
+        if (coord.getX() < ship.getStartX()) return false;
+        if (coord.getY() < ship.getStartY()) return false;
+        if (!ship.isVertical() && coord.getX() > ship.getStartX() + ship.getSize()) return false;
+        if (ship.isVertical() && coord.getX() != ship.getStartX()) return false;
+        if (ship.isVertical() && coord.getY() > ship.getStartY() + ship.getSize()) return false;
+        if (!ship.isVertical() && coord.getY() != ship.getStartY()) return false;
+        return true;
     }
 
     // send shoot object to both client playing the game

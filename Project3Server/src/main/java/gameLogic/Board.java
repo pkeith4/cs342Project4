@@ -82,4 +82,6 @@ public class Board {
     public int getHeight() {
         return height;
     }
+
+    public List<Ship> getShips() { return this.ships; }
 }
