@@ -36,27 +36,27 @@ public class Client extends Thread{
                 try {
                     // read messages from the server
                     Object obj = in.readObject();
-                    switch (obj) {
-                        case serverMessages.CreateUsername message:
-                            createUsernameCallback.accept(message);
-                            break;
-                        case serverMessages.AcceptInvite message:
-                            onAcceptInviteCallback.accept(message);
-                            break;
-                        case serverMessages.GetQueue message:
-                            getQueueCallback.accept(message);
-                            break;
-                        case serverMessages.SendGameReady message:
-                            onGameReadyCallback.accept(message);
-                            break;
-                        case serverMessages.SendInvite message:
-                            onInviteRequestCallback.accept(message);
-                            break;
-                        case serverMessages.Shoot message:
-                            onOpponentShootCallback.accept(message);
-                            break;
-                        default:
-                            throw new IllegalStateException("Unexpected object was sent: " + obj);
+
+                    if (obj instanceof serverMessages.CreateUsername) {
+                        serverMessages.CreateUsername message = (serverMessages.CreateUsername) obj;
+                        createUsernameCallback.accept(message);
+                    } else if (obj instanceof serverMessages.AcceptInvite) {
+                        serverMessages.AcceptInvite message = (serverMessages.AcceptInvite) obj;
+                        onAcceptInviteCallback.accept(message);
+                    } else if (obj instanceof serverMessages.GetQueue) {
+                        serverMessages.GetQueue message = (serverMessages.GetQueue) obj;
+                        getQueueCallback.accept(message);
+                    } else if (obj instanceof serverMessages.SendGameReady) {
+                        serverMessages.SendGameReady message = (serverMessages.SendGameReady) obj;
+                        onGameReadyCallback.accept(message);
+                    } else if (obj instanceof serverMessages.SendInvite) {
+                        serverMessages.SendInvite message = (serverMessages.SendInvite) obj;
+                        onInviteRequestCallback.accept(message);
+                    } else if (obj instanceof serverMessages.Shoot) {
+                        serverMessages.Shoot message = (serverMessages.Shoot) obj;
+                        onOpponentShootCallback.accept(message);
+                    } else {
+                        throw new IllegalStateException("Unexpected object was sent: " + obj);
                     }
                 } catch (IOException | ClassNotFoundException e) {
                     System.out.println("Error reading from server: " + e.getMessage());
