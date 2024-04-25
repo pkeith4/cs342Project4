@@ -1,6 +1,9 @@
 // Player-specific data such as their board and any flags indicating their status in the game.
 package gameLogic;
 
+import java.util.List;
+import java.util.ArrayList;
+
 public class Player {
     private String name;
     private Board board;
@@ -64,5 +67,9 @@ public class Player {
 
     public String getName() {
         return name;
+    }
+
+    public boolean isTurn() {
+        return this.isTurn;
     }
 }

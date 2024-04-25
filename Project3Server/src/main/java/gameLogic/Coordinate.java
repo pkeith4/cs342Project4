@@ -7,7 +7,7 @@ public class Coordinate {
 
     public Coordinate(int x, int y) {
         // Add bounds checking if necessary
-        if (x < 0 || x >= Board.BOARD_WIDTH || y < 0 || y >= Board.BOARD_HEIGHT) {
+        if (x < 0 || x >= 10 || y < 0 || y >= 10) {
             throw new IllegalArgumentException("Coordinates out of bounds");
         }
         this.x = x;
