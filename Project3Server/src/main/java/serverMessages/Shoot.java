@@ -7,13 +7,21 @@ public class Shoot implements Serializable {
     private boolean hit;
     private int[][] revealedShip;
     private boolean gameOver;
+    private int row;
+    private int col;
 
-    public Shoot(boolean hit, int[][] revealedShip, boolean gameOver) {
-       this.hit = hit;
-       this.revealedShip = revealedShip;
-       this.gameOver = gameOver;
+    public Shoot(int row, int col, boolean hit, int[][] revealedShip, boolean gameOver) {
+        this.row = row;
+        this.col = col;
+        this.hit = hit;
+        this.revealedShip = revealedShip;
+        this.gameOver = gameOver;
     }
 
+    // row of the cell the opponent hit
+    public int getRow() { return this.row; }
+    // col of the cell the opponent hit
+    public int getCol() { return this.col; }
     // Get boolean whether a ship was hit or not
     public boolean getHit() { return hit; }
     /*
