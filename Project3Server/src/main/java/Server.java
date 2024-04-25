@@ -1,10 +1,13 @@
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.ArrayList;
 import java.util.function.Consumer;
 
 public class Server extends Thread {
     private Consumer<String> serverCallback;
     private ArrayList<ClientThread> clients;
+    private ArrayList<String> usernames;
+    private ArrayList<String> queue;
 
     @Override
     public void run() {
@@ -36,15 +39,35 @@ public class Server extends Thread {
             throw new RuntimeException(e);
         }
     }
+    public void addUsername(String username) { this.usernames.add(username); }
+    public void addToQueue(String username) {
+        if (this.queue.contains(username)) {
+            throw new IllegalStateException("Cannot add duplicate username to queue");
+        }
+        this.queue.add(username);
+    }
+    public void removeFromQueue(String username) {
+        if (!this.queue.remove(username))
+            throw new IllegalStateException("You are attempting to remove a username that does not exist in the queue");
+    }
 
+    public ClientThread getClient(String username) {
+       for (ClientThread client : this.clients) { // iterate through clients
+          if (client.getUsername().equals(username)) {
+              return client;
+          }
+       }
+       return null;
+    }
+    public ArrayList<String> getQueue() { return this.queue; }
+    public ArrayList<String> getUsernames() { return this.usernames; }
     public Consumer<String> getServerCallback() { return this.serverCallback; }
-
     // close the socket connection
 //    public void close() {
 //        try {
 //            if (socketClient != null) {
 //                socketClient.close();
-//            }
+
 //            if (out != null) {
 //                out.close();
 //            }
