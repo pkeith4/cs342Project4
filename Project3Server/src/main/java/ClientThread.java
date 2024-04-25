@@ -46,6 +46,7 @@ public class ClientThread extends Thread {
                         this.addToQueue();
                         break;
                     case clientMessages.CreateUsername message:
+                        this.server.getServerCallback().accept("Incoming username...");
                         this.createUsername(message.getUsername());
                         break;
                     case clientMessages.GetQueue message:
@@ -190,7 +191,7 @@ public class ClientThread extends Thread {
 
     public void createUsername(String username) {
         boolean success = false;
-        if (usernameExists(username)) { // if username exists
+        if (!usernameExists(username)) { // if username exists
             // add username to client
             success = true;
             this.username = username;
@@ -200,7 +201,7 @@ public class ClientThread extends Thread {
 
         // send status back to client
         serverMessages.CreateUsername message = new serverMessages.CreateUsername(username, success);
-
+        writeToClient(message);
     }
     public boolean usernameExists(String username) {
         for (String tempUsername : this.server.getUsernames())

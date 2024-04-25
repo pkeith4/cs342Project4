@@ -17,7 +17,6 @@ import javafx.util.Duration;
 public class UsernameScene {
 
     private Client clientConnection;
-    private String username;
     private TextField usernameInput;
     private Button setUsernameButton;
 
@@ -27,16 +26,18 @@ public class UsernameScene {
 
     public Scene getScene(Stage primaryStage) {
         Label errorMsg = new Label();
-        errorMsg.setStyle("-fx-text-fill: red;");
+        errorMsg.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
         usernameInput = new TextField();
         usernameInput.setPrefWidth(150);
         usernameInput.setMinWidth(100);
         usernameInput.setMaxWidth(200);
+        usernameInput.getStyleClass().add("bubble");
 
         setUsernameButton = new Button("Set Username");
-        setUsernameButton.setPrefSize(120, 20);
-        setUsernameButton.setMaxSize(140, 40);
-        setUsernameButton.setMinSize(100, 20);
+        setUsernameButton.setPrefSize(120, 30);
+        setUsernameButton.setMaxSize(140, 30);
+        setUsernameButton.setMinSize(100, 30);
+        setUsernameButton.getStyleClass().add("bubble");
 
         setUsernameButton.setOnAction(e -> {
             String username = usernameInput.getText().trim(); // Trim any white space
@@ -44,7 +45,6 @@ public class UsernameScene {
                 clientConnection.createUsername(username, data -> {
                     Platform.runLater(() -> {
                         if (data.getSuccess()) { // Assuming getSuccess() method checks response from server
-                            this.username = username;
                             primaryStage.setScene(StartScene.getScene(primaryStage, clientConnection));
                         } else {
                             errorMsg.setText("Username is already taken!");
@@ -79,7 +79,9 @@ public class UsernameScene {
                 "-fx-background-repeat: no-repeat; " +
                 "-fx-background-position: center center;");
 
-        return new Scene(mainLayout, 300, 200);
+        Scene scene = new Scene(mainLayout, 300, 200);
+        scene.getStylesheets().add(InviteScene.class.getResource("style.css").toExternalForm());
+        return scene;
     }
 
     private void resetErrorMessage(Label errorMsg) {
