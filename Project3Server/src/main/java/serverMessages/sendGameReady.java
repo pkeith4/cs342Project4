@@ -2,8 +2,8 @@ package serverMessages;
 
 import java.io.Serializable;
 
-public class sendGameReady implements Serializable {
+public class SendGameReady implements Serializable {
     private static final long serialVersionUID = 1;
 
-    public sendGameReady() { /* do nothing */ }
+    public SendGameReady() { /* do nothing */ }
 }
