@@ -70,20 +70,4 @@ public class Server extends Thread {
     public ArrayList<String> getQueue() { return this.queue; }
     public ArrayList<String> getUsernames() { return this.usernames; }
     public Consumer<String> getServerCallback() { return this.serverCallback; }
-    // close the socket connection
-//    public void close() {
-//        try {
-//            if (socketClient != null) {
-//                socketClient.close();
-
-//            if (out != null) {
-//                out.close();
-//            }
-//            if (in != null) {
-//                in.close();
-//            }
-//        } catch (IOException e) {
-//            System.out.println("Error closing client resources: " + e.getMessage());
-//        }
-//    }
 }

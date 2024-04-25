@@ -3,6 +3,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -14,14 +15,24 @@ public class HelpScene {
         BorderPane layout = new BorderPane();
         layout.setPadding(new Insets(10, 20, 10, 20));
 
+        // Back button to return to the StartScene
+        Button backButton = new Button();
+        backButton.setPrefSize(140, 40);
+        backButton.getStyleClass().addAll("bubble", "image", "back-btn");
+        backButton.setOnAction(e -> {
+            primaryStage.setScene(StartScene.getScene(primaryStage, clientConnection));
+            primaryStage.setFullScreen(true);
+        });
+
+
         // Title for the help scene
-        Text titleText = new Text("Game Instructions");
+        Text titleText = new Text("Game Instructions\n");
         titleText.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
         VBox titleBox = new VBox(titleText);
         titleBox.setAlignment(Pos.CENTER);
-
         // Detailed instructions with bold headers using TextFlow
         TextFlow instructions = new TextFlow(
+                titleText,
                 new Text("Welcome to Battleship!\n\n"),
                 new Text("Board Setup:\n"),
                 new Text("Place your fleet of ships on a 10x10 grid. Your fleet includes ships of the following sizes:\n"),
@@ -37,26 +48,20 @@ public class HelpScene {
                 new Text("To play, select a grid cell to target during your turn and hit 'Fire'. The game updates both grids " +
                         "to show hits and misses, with hits marked as red and misses as white.")
         );
+        instructions.setStyle("-fx-text-alignment: center;");
 
         // Applying bold style to headers
-        ((Text)instructions.getChildren().get(1)).setStyle("-fx-font-weight: bold;");
-        ((Text)instructions.getChildren().get(7)).setStyle("-fx-font-weight: bold;");
-        ((Text)instructions.getChildren().get(9)).setStyle("-fx-font-weight: bold;");
+        ((Text)instructions.getChildren().get(2)).setStyle("-fx-font-weight: bold;");
+        ((Text)instructions.getChildren().get(8)).setStyle("-fx-font-weight: bold;");
+        ((Text)instructions.getChildren().get(10)).setStyle("-fx-font-weight: bold;");
 
-        // Back button to return to the StartScene
-        Button backButton = new Button("Back");
-        backButton.setOnAction(e -> primaryStage.setScene(StartScene.getScene(primaryStage, clientConnection)));
-        backButton.setStyle("-fx-background-color: #fafafa; -fx-font-weight: bold;");
-        BorderPane.setAlignment(backButton, Pos.BOTTOM_RIGHT);
-
-        // Organizing the layout
-        VBox centerContent = new VBox(10, instructions);
-        centerContent.setAlignment(Pos.TOP_CENTER);
-
-        layout.setTop(titleBox);
-        layout.setCenter(centerContent);
+        layout.setTop(Helper.getTitle());
         layout.setBottom(backButton);
+        layout.setCenter(instructions);
+        layout.getStyleClass().add("background");
 
-        return new Scene(layout, 400, 300);
+        Scene scene = new Scene(layout);
+        scene.getStylesheets().add(InviteScene.class.getResource("style.css").toExternalForm());
+        return scene;
     }
 }

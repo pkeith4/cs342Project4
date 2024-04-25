@@ -9,6 +9,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -46,6 +47,7 @@ public class UsernameScene {
                     Platform.runLater(() -> {
                         if (data.getSuccess()) { // Assuming getSuccess() method checks response from server
                             primaryStage.setScene(StartScene.getScene(primaryStage, clientConnection));
+                            primaryStage.setFullScreen(true);
                         } else {
                             errorMsg.setText("Username is already taken!");
                             resetErrorMessage(errorMsg);
@@ -62,24 +64,12 @@ public class UsernameScene {
         layout.setAlignment(Pos.TOP_CENTER);
         layout.setPadding(new Insets(10));
 
-        Image battleshipImage = new Image(getClass().getResourceAsStream("/images/battleship.png"));
-        ImageView battleshipImageView = new ImageView(battleshipImage);
-        battleshipImageView.setFitHeight(1250);
-        battleshipImageView.setFitWidth(1500);
-        battleshipImageView.setPreserveRatio(true);
-        battleshipImageView.setTranslateX(180);
-        battleshipImageView.setTranslateY(-20);
-
         BorderPane mainLayout = new BorderPane();
-        mainLayout.setTop(battleshipImageView);
-        BorderPane.setMargin(battleshipImageView, new Insets(20, 0, 0, 0));
+        mainLayout.setTop(Helper.getTitle());
         mainLayout.setCenter(layout);
-        mainLayout.setStyle("-fx-background-image: url('/images/background.png'); " +
-                "-fx-background-size: cover; " +
-                "-fx-background-repeat: no-repeat; " +
-                "-fx-background-position: center center;");
+        mainLayout.getStyleClass().add("background");
 
-        Scene scene = new Scene(mainLayout, 300, 200);
+        Scene scene = new Scene(mainLayout);
         scene.getStylesheets().add(InviteScene.class.getResource("style.css").toExternalForm());
         return scene;
     }

@@ -66,6 +66,7 @@ public class ClientThread extends Thread {
                 }
             } catch (IOException | ClassNotFoundException e) {
                 server.getServerCallback().accept("Client #" + this.clientCount + " ran into an error, breaking out of read loop");
+                break;
             }
         }
     }

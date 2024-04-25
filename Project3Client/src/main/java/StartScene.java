@@ -14,36 +14,51 @@ public class StartScene {
         layout.setPadding(new Insets(10, 10, 10, 10));
 
         // Help Button on the top-left
-        Button helpButton = new Button("Help (?)");
-        helpButton.setOnAction(e -> primaryStage.setScene(HelpScene.getScene(primaryStage, clientConnection)));
+        Button helpButton = new Button();
+        helpButton.setPrefSize(140, 40);
+        helpButton.getStyleClass().addAll("bubble", "help-btn", "image");
+        helpButton.setOnAction(e -> {
+            primaryStage.setScene(HelpScene.getScene(primaryStage, clientConnection));
+            primaryStage.setFullScreen(true);
+        });
 
         // Quit Button on the top-right
-        Button quitButton = new Button("Quit");
+        Button quitButton = new Button();
+        quitButton.setPrefSize(140, 40);
+        quitButton.getStyleClass().addAll("bubble", "quit-btn", "image");
         quitButton.setOnAction(e -> System.exit(0)); // Properly exit the application
 
         // Top bar with Help and Quit buttons
-        HBox topBar = new HBox(10);
-        topBar.getChildren().addAll(helpButton, quitButton);
-        HBox.setHgrow(helpButton, javafx.scene.layout.Priority.ALWAYS);
-        HBox.setHgrow(quitButton, javafx.scene.layout.Priority.ALWAYS);
-        helpButton.setMaxWidth(Double.MAX_VALUE);
-        quitButton.setMaxWidth(Double.MAX_VALUE);
-        helpButton.setAlignment(Pos.CENTER_LEFT);
-        quitButton.setAlignment(Pos.CENTER_RIGHT);
-        layout.setTop(topBar);
+        HBox bottomBar = new HBox(30);
+        bottomBar.getChildren().addAll(helpButton, quitButton);
+        layout.setBottom(bottomBar);
 
         // Game Mode label and buttons
         Label gameModeLabel = new Label("Choose Game Mode:");
-        Button aiButton = new Button("AI");
-        aiButton.setOnAction(e -> primaryStage.setScene(PlacementScene.getScene(primaryStage, true, clientConnection)));  // Assuming PlacementScene takes Client
-        Button pvpButton = new Button("PvP");
-        pvpButton.setOnAction(e -> primaryStage.setScene(PlacementScene.getScene(primaryStage, false, clientConnection)));
+        gameModeLabel.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        Button aiButton = new Button();
+        aiButton.getStyleClass().addAll("bubble", "image", "ai-btn");
+        aiButton.setPrefSize(140, 40);
+//        aiButton.setOnAction(e -> primaryStage.setScene(PlacementScene.getScene(primaryStage, true, clientConnection)));  // Assuming PlacementScene takes Client
+        Button pvpButton = new Button();
+        pvpButton.setPrefSize(140, 40);
+        pvpButton.getStyleClass().addAll("bubble", "image", "pvp-btn");
+        pvpButton.setOnAction(e -> {
+            InviteScene scene = new InviteScene(primaryStage, clientConnection);
+            primaryStage.setScene(scene.getScene());
+            primaryStage.setFullScreen(true);
+        });
 
         VBox centerBox = new VBox(10);
         centerBox.getChildren().addAll(gameModeLabel, aiButton, pvpButton);
         centerBox.setAlignment(Pos.CENTER);
         layout.setCenter(centerBox);
+        layout.getStyleClass().add("background");
 
-        return new Scene(layout, 400, 300);
+        layout.setTop(Helper.getTitle());
+
+        Scene scene = new Scene(layout);
+        scene.getStylesheets().add(InviteScene.class.getResource("style.css").toExternalForm());
+        return scene;
     }
 }
