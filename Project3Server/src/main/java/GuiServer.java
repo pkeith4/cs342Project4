@@ -43,6 +43,7 @@ public class GuiServer extends Application{
 				listItems.getItems().add(formattedTime + ": " + data.toString());
 			});
 		});
+		serverConnection.start();
 
 		listItems = new ListView<>();
 		activeUsers = new ListView<>();

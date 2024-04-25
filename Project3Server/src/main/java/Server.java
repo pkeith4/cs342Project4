@@ -11,6 +11,9 @@ public class Server extends Thread {
 
     Server(Consumer<String> callback) {
        this.serverCallback = callback;
+       this.clients = new ArrayList<>();
+       this.usernames = new ArrayList<>();
+       this.queue = new ArrayList<>();
     }
     @Override
     public void run() {
@@ -34,7 +37,9 @@ public class Server extends Thread {
                 clientCounter++; // increment the client counter
             }
         }  catch(Exception e) {
-            serverCallback.accept("Fatal exception caused in client connection loop: " + e.toString());
+            e.printStackTrace();
+            System.out.println("Fatal exception: " + e.getMessage());
+            serverCallback.accept("Fatal exception caused in client connection loop: " + e.getMessage());
         }
         try {
             socket.close();
