@@ -10,9 +10,9 @@ public class Player {
     private List<Ship> ships;
     private boolean isTurn;
 
-    public Player(String name, int boardWidth, int boardHeight) {
+    public Player(String name) {
         this.name = name;
-        this.board = new Board(boardWidth, boardHeight);
+        this.board = new Board();
         this.ships = new ArrayList<>();
         this.isTurn = false;
     }
