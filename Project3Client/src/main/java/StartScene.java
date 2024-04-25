@@ -39,7 +39,10 @@ public class StartScene {
         Button aiButton = new Button();
         aiButton.getStyleClass().addAll("bubble", "image", "ai-btn");
         aiButton.setPrefSize(140, 40);
-//        aiButton.setOnAction(e -> primaryStage.setScene(PlacementScene.getScene(primaryStage, true, clientConnection)));  // Assuming PlacementScene takes Client
+        aiButton.setOnAction(e -> {
+            PlacementScene scene = new PlacementScene(primaryStage, true, clientConnection);
+            primaryStage.setScene(scene.getScene());
+        });  // Assuming PlacementScene takes Client
         Button pvpButton = new Button();
         pvpButton.setPrefSize(140, 40);
         pvpButton.getStyleClass().addAll("bubble", "image", "pvp-btn");

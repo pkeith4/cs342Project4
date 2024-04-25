@@ -14,21 +14,39 @@ import javafx.stage.Stage;
 public class PlacementScene {
     private static final int GRID_SIZE = 10;
     private Button[][] grid = new Button[GRID_SIZE][GRID_SIZE];
-    private boolean isVertical = false;
-    private int currentShipSize = 5;
-    private int[] shipSizes = {5, 4, 3, 3, 2}; // Sizes of the ships to be placed
-    private int shipIndex = 0; // Index to track which ship is being placed
-    private Image shipBlock = new Image("file:shipblockfinal.png");
-    private Image shipEnd = new Image("file:shipendfinal.png");
-    private Image background = new Image("file:background.png"); // Transparent background for buttons
+    private boolean isVertical = true; // Assume default orientation is vertical
+    private int currentShipSize = 5; // Starting with the largest ship
+    private int[] shipSizes = {5, 4, 3, 3, 2}; // Ship sizes to be placed
+    private int shipIndex = 0; // To track which ship size is currently being placed
+    private Image shipBlock;
+    private Image shipEnd;
+    private Image background;
 
-    public Scene createScene(Stage primaryStage) {
+    public PlacementScene() {
+        loadImages();
+    }
+
+    private void loadImages() {
+        try {
+            shipBlock = new Image("/images/shipblockfinal.png");
+            shipEnd = new Image("/images/shipendfinal.png");
+            background = new Image("/images/background.png");
+            if (shipBlock.isError() || shipEnd.isError() || background.isError()) {
+                throw new RuntimeException("Error loading images");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    public Scene getScene() {
         BorderPane root = new BorderPane();
         GridPane gridPane = createGrid();
         root.setCenter(gridPane);
-        root.setBackground(new Background(new BackgroundImage(new Image("file:background.png"),
-                BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
-                BackgroundSize.DEFAULT)));
+
+        BackgroundImage bgImage = new BackgroundImage(background, BackgroundRepeat.REPEAT, BackgroundRepeat.REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT);
+        root.setBackground(new Background(bgImage));
 
         Scene scene = new Scene(root, 600, 600);
         setupKeyBindings(scene);
@@ -37,7 +55,6 @@ public class PlacementScene {
 
     private GridPane createGrid() {
         GridPane gridPane = new GridPane();
-        //gridPane.setPadding(new Insets(5));
         gridPane.setHgap(5);
         gridPane.setVgap(5);
 
@@ -45,76 +62,72 @@ public class PlacementScene {
             for (int j = 0; j < GRID_SIZE; j++) {
                 Button button = new Button();
                 button.setPrefSize(30, 30);
-                button.setBackground(new Background(new BackgroundImage(background,
-                        BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
-                        BackgroundSize.DEFAULT)));
+                button.setStyle("-fx-background-color: transparent;");
                 final int x = i, y = j;
                 button.setOnMouseEntered(e -> showShip(x, y));
                 button.setOnMouseExited(e -> clearShip());
                 button.setOnMouseClicked(e -> placeShip(x, y));
-                grid[x][y] = button;
-                gridPane.add(button, x, y);
+                grid[i][j] = button;
+                gridPane.add(button, i, j);
             }
         }
         return gridPane;
     }
 
     private void showShip(int x, int y) {
-        clearShip();
         try {
-            int length = currentShipSize;
-            for (int i = 0; i < length; i++) {
+            clearShip(); // Clear previously shown ships
+            for (int i = 0; i < currentShipSize; i++) {
                 int dx = isVertical ? 0 : i;
                 int dy = isVertical ? i : 0;
                 if (x + dx < GRID_SIZE && y + dy < GRID_SIZE) {
                     Button btn = grid[x + dx][y + dy];
                     btn.setBackground(new Background(new BackgroundImage(shipBlock,
                             BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
-                            BackgroundSize.DEFAULT)));
+                            BackgroundSize.COVER)));
                 }
             }
         } catch (ArrayIndexOutOfBoundsException ignored) {
+            // Handle out of bounds
         }
     }
 
     private void clearShip() {
-        for (Button[] row : grid) {
-            for (Button btn : row) {
-                btn.setBackground(new Background(new BackgroundImage(background,
-                        BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
-                        BackgroundSize.DEFAULT)));
+        for (int i = 0; i < GRID_SIZE; i++) {
+            for (int j = 0; j < GRID_SIZE; j++) {
+                grid[i][j].setStyle("-fx-background-color: transparent;");
             }
         }
     }
 
     private void placeShip(int x, int y) {
-        if (shipIndex >= shipSizes.length) return; // No more ships to place
+        if (shipIndex >= shipSizes.length) return; // Check if all ships are placed
         try {
-            int length = currentShipSize;
-            for (int i = 0; i < length; i++) {
+            for (int i = 0; i < currentShipSize; i++) {
                 int dx = isVertical ? 0 : i;
                 int dy = isVertical ? i : 0;
                 if (x + dx < GRID_SIZE && y + dy < GRID_SIZE) {
                     Button btn = grid[x + dx][y + dy];
-                    btn.setBackground(new Background(new BackgroundImage(shipBlock,
+                    btn.setBackground(new Background(new BackgroundImage(shipEnd,
                             BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
-                            BackgroundSize.DEFAULT)));
+                            BackgroundSize.COVER)));
                 }
             }
-            shipIndex++; // Move to the next ship
+            shipIndex++;
             if (shipIndex < shipSizes.length) {
-                currentShipSize = shipSizes[shipIndex];
+                currentShipSize = shipSizes[shipIndex]; // Update to next ship size
             } else {
                 System.out.println("All ships placed");
             }
         } catch (ArrayIndexOutOfBoundsException ignored) {
+            // Handle out of bounds
         }
     }
 
     private void setupKeyBindings(Scene scene) {
         scene.setOnKeyPressed(event -> {
             if (event.getCode() == KeyCode.SPACE) {
-                isVertical = !isVertical; // Toggle ship orientation
+                isVertical = !isVertical; // Toggle orientation
                 System.out.println("Orientation changed to " + (isVertical ? "Vertical" : "Horizontal"));
             }
         });
