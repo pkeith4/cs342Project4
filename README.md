@@ -27,3 +27,12 @@ Same steps as client Ares joining the queue
 10. **Server:** Server sends AcceptInvite to Ares & David
 11. **Ares:** Ares receives AcceptInvite, GuiClient initializes game
 12. **David:** David receives AcceptInvite, GuiClient initializes game
+## Play Game Workflow
+### This assumes two players (David & Ares) have already joined the game
+#### Aress' Turn
+1. **David** Client.onOpponentShoot function awaiting Shoot object from server...
+2. **Ares** Hovers over GuiClient on the tile to hit
+3. **Ares** Clicks on tile, Client.shoot is called...
+4. **Ares** Client.shoot sends clientMessage.Shoot to server
+5. **Server** Picks up clientMessage.Shoot, and sends serverMessage.Shoot to the opponent with the data of Aress' shot (David)
+6. **David** Client.onOpponentShootCallback is triggered, GuiClient inteprets serverMessage.Shoot object...
