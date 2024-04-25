@@ -1,10 +1,10 @@
 package clientMessages;
 
 public class SendBoard {
-    public int[][][] ships;
+    public char[10][10] board;
 
-    public SendBoard(int[][][] ships) {
-        this.ships = ships;
+    public SendBoard(char[10][10] board) {
+        this.board = board;
     }
 
     /*
@@ -26,6 +26,6 @@ public class SendBoard {
             [[2,0], [3,0]] // 2 length ship at the bottom
         ]
     */
-    public int[][][] getShips() { return this.ships; }
+    public char[][] getShips() { return this.board; }
 
  }

@@ -25,6 +25,10 @@ public class Player {
         return placed;
     }
 
+    pubilc boolean setBoard(Board board){
+        this.board = board;
+    }
+
     public boolean makeGuess(int x, int y, Player opponent) {
         if (isTurn) {
             boolean hit = opponent.receiveAttack(x, y);
