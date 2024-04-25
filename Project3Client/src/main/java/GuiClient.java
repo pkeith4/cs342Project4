@@ -1,4 +1,5 @@
 import javafx.application.Application;
+import javafx.scene.Scene;
 import javafx.stage.Stage;
 
 public class GuiClient extends Application {
@@ -40,6 +41,19 @@ public class GuiClient extends Application {
 	public void setupInviteScene() {
 		InviteScene scene = new InviteScene(primaryStage, clientConnection);
 		primaryStage.setScene(scene.getScene());
+		primaryStage.setFullScreen(true);
+	}
+
+	public void setupPlacementScene() {
+		// Assuming PlacementScene is refactored to not extend Application
+		PlacementScene placementScene = new PlacementScene();
+		primaryStage.setScene(placementScene.createScene(primaryStage));
+		primaryStage.setFullScreen(true);
+	}
+	public void setupGameScene() {
+		// Assuming GameScene has a static method to create and return a Scene
+		Scene gameScene = GameScene.createGameScene(primaryStage);
+		primaryStage.setScene(gameScene);
 		primaryStage.setFullScreen(true);
 	}
 }

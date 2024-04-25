@@ -1,20 +1,17 @@
-import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import javafx.stage.Stage;
-import javafx.geometry.Insets;
-import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.BackgroundImage;
 import javafx.scene.layout.BackgroundPosition;
 import javafx.scene.layout.BackgroundRepeat;
 import javafx.scene.layout.BackgroundSize;
+import javafx.scene.input.KeyCode;
+import javafx.stage.Stage;
 
-public class PlacementScene extends Application {
+public class PlacementScene {
     private static final int GRID_SIZE = 10;
     private Button[][] grid = new Button[GRID_SIZE][GRID_SIZE];
     private boolean isVertical = false;
@@ -25,8 +22,7 @@ public class PlacementScene extends Application {
     private Image shipEnd = new Image("file:shipendfinal.png");
     private Image background = new Image("file:background.png"); // Transparent background for buttons
 
-    @Override
-    public void start(Stage primaryStage) {
+    public Scene createScene(Stage primaryStage) {
         BorderPane root = new BorderPane();
         GridPane gridPane = createGrid();
         root.setCenter(gridPane);
@@ -36,14 +32,12 @@ public class PlacementScene extends Application {
 
         Scene scene = new Scene(root, 600, 600);
         setupKeyBindings(scene);
-        primaryStage.setScene(scene);
-        primaryStage.setTitle("Place Your Ships");
-        primaryStage.show();
+        return scene;
     }
 
     private GridPane createGrid() {
         GridPane gridPane = new GridPane();
-        gridPane.setPadding(new Insets(5));
+        //gridPane.setPadding(new Insets(5));
         gridPane.setHgap(5);
         gridPane.setVgap(5);
 
@@ -124,9 +118,5 @@ public class PlacementScene extends Application {
                 System.out.println("Orientation changed to " + (isVertical ? "Vertical" : "Horizontal"));
             }
         });
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 }
