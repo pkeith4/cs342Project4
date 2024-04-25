@@ -13,6 +13,9 @@ public class Client extends Thread{
     ObjectOutputStream out;
     ObjectInputStream in;
 
+    // validated username from server
+    String username;
+
     // callback functions
     Consumer<serverMessages.CreateUsername> createUsernameCallback;
     Consumer<serverMessages.AcceptInvite> onAcceptInviteCallback;
@@ -40,6 +43,9 @@ public class Client extends Thread{
                     if (obj instanceof serverMessages.CreateUsername) {
                         serverMessages.CreateUsername message = (serverMessages.CreateUsername) obj;
                         createUsernameCallback.accept(message);
+                        if (message.getSuccess()) {
+                            this.username = message.getUsername();
+                        }
                     } else if (obj instanceof serverMessages.AcceptInvite) {
                         serverMessages.AcceptInvite message = (serverMessages.AcceptInvite) obj;
                         onAcceptInviteCallback.accept(message);
@@ -161,4 +167,5 @@ public class Client extends Thread{
             System.out.println("Error closing client resources: " + e.getMessage());
         }
     }
+    public String getUsername() { return this.username; }
 }

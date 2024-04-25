@@ -18,7 +18,7 @@ public class GuiClient extends Application {
 		clientConnection = new Client(); // Assuming Client is your custom class for handling network
 		clientConnection.start(); // Assuming Client extends Thread
 
-		setupUsernameScene();
+		setupInviteScene();
 		primaryStage.show();
 	}
 
@@ -33,5 +33,9 @@ public class GuiClient extends Application {
 
 	public void setupHelpScene() {
 		primaryStage.setScene(HelpScene.getScene(primaryStage, clientConnection));
+	}
+	public void setupInviteScene() {
+		InviteScene scene = new InviteScene(primaryStage, clientConnection);
+		primaryStage.setScene(scene.getScene());
 	}
 }
