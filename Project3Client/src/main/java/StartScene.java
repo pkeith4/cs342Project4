@@ -40,7 +40,7 @@ public class StartScene {
         aiButton.getStyleClass().addAll("bubble", "image", "ai-btn");
         aiButton.setPrefSize(140, 40);
         aiButton.setOnAction(e -> {
-            PlacementScene scene = new PlacementScene(primaryStage, true, clientConnection);
+            PlacementScene scene = new PlacementScene(primaryStage, true, null, clientConnection);
             primaryStage.setScene(scene.getScene());
         });  // Assuming PlacementScene takes Client
         Button pvpButton = new Button();

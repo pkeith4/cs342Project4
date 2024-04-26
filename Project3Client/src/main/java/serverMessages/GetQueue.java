@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class GetQueue implements Serializable {
-    static final long serialVersionUID = 1;
+    public static long serialVersionUID = 3;
     private ArrayList<String> queue;
 
     public GetQueue(ArrayList<String> queue) {

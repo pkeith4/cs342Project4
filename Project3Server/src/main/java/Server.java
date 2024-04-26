@@ -8,18 +8,20 @@ public class Server extends Thread {
     private ArrayList<ClientThread> clients;
     private ArrayList<String> usernames;
     private ArrayList<String> queue;
+    private int clientCounter;
 
     Server(Consumer<String> callback) {
        this.serverCallback = callback;
        this.clients = new ArrayList<>();
        this.usernames = new ArrayList<>();
        this.queue = new ArrayList<>();
+        this.clientCounter = 1;
     }
     @Override
     public void run() {
         ServerSocket socket;
         try {
-            socket = new ServerSocket(5555);
+            socket = new ServerSocket(5556);
         } catch (IOException e) {
             serverCallback.accept("Fatal error: Server could not launch");
             return;
@@ -27,7 +29,6 @@ public class Server extends Thread {
         try {
             serverCallback.accept("Server has launched, awaiting client connections...");
 
-            int clientCounter = 1;
             while (true) { // iterate infinitely looking for new socket connections
                 ClientThread client = new ClientThread(socket.accept(), clientCounter, this);
                 serverCallback.accept("Client #" + clientCounter + " has connected!");
@@ -53,10 +54,17 @@ public class Server extends Thread {
             throw new IllegalStateException("Cannot add duplicate username to queue");
         }
         this.queue.add(username);
+        this.serverCallback.accept("Sending queue change to clients 1-" + String.valueOf(this.clientCounter));
+        for (ClientThread client : this.clients) {
+            client.sendQueueChange(username, true);
+        }
     }
     public void removeFromQueue(String username) {
         if (!this.queue.remove(username))
             throw new IllegalStateException("You are attempting to remove a username that does not exist in the queue");
+        for (ClientThread client : this.clients) {
+            client.sendQueueChange(username, false);
+        }
     }
 
     public ClientThread getClient(String username) {

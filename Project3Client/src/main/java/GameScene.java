@@ -110,8 +110,8 @@ public class GameScene {
         if (currentPlayer.isAllShipsSunk() || currentOpponent.isAllShipsSunk()) {
             boolean won = currentOpponent.isAllShipsSunk();
             // Proceed to end game scene
-            Scene endScene = EndScene.createEndScene(won, primaryStage, null); // Assuming Client connection if needed
-            primaryStage.setScene(endScene);
+            EndScene scene = new EndScene(won, primaryStage, null); // Assuming Client connection if needed
+            primaryStage.setScene(scene.getScene());
         }
         // Otherwise, toggle player turn
         currentPlayer.setTurn(false);

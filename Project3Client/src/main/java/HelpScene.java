@@ -15,16 +15,6 @@ public class HelpScene {
         BorderPane layout = new BorderPane();
         layout.setPadding(new Insets(10, 20, 10, 20));
 
-        // Back button to return to the StartScene
-        Button backButton = new Button();
-        backButton.setPrefSize(140, 40);
-        backButton.getStyleClass().addAll("bubble", "image", "back-btn");
-        backButton.setOnAction(e -> {
-            primaryStage.setScene(StartScene.getScene(primaryStage, clientConnection));
-            primaryStage.setFullScreen(true);
-        });
-
-
         // Title for the help scene
         Text titleText = new Text("Game Instructions\n");
         titleText.setStyle("-fx-font-size: 24px; -fx-font-weight: bold;");
@@ -56,7 +46,7 @@ public class HelpScene {
         ((Text)instructions.getChildren().get(10)).setStyle("-fx-font-weight: bold;");
 
         layout.setTop(Helper.getTitle());
-        layout.setBottom(backButton);
+        layout.setBottom(Helper.getBackButton(primaryStage, clientConnection));
         layout.setCenter(instructions);
         layout.getStyleClass().add("background");
 

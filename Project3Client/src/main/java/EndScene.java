@@ -10,8 +10,15 @@ import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
 
 public class EndScene {
-
-    public Scene createEndScene(boolean won, Stage primaryStage, Client clientConnection) {
+    private boolean won;
+    private Stage primaryStage;
+    private Client clientConnection;
+    public EndScene(boolean won, Stage primaryStage, Client clientConnection) {
+       this.won = won;
+       this.primaryStage = primaryStage;
+       this.clientConnection = clientConnection;
+    }
+    public Scene getScene() {
         BorderPane layout = new BorderPane();
         layout.setStyle("-fx-background-image: url('/images/background.png'); " +
                 "-fx-background-size: cover; " +

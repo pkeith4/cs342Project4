@@ -2,36 +2,39 @@ import javafx.animation.Animation;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListView;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.scene.shape.Rectangle;
 
-import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public class InviteScene {
     private Stage primaryStage;
     private Client clientConnection;
-    private VBox inviteBox;
     InviteScene(Stage primaryStage, Client clientConnection) {
         this.primaryStage = primaryStage;
         this.clientConnection = clientConnection;
-        inviteBox = new VBox();
     }
     public Scene getScene() {
         // send add to queue request to server
         clientConnection.addToQueue();
         // initialize on accept invite
         clientConnection.onAcceptInvite(data -> {
-            System.out.println(data.getSuccess());
-            System.out.println(data.getUsername());
+            Platform.runLater(() -> {
+                // open placement scene
+                PlacementScene scene = new PlacementScene(this.primaryStage, false, data.getUsername(), this.clientConnection);
+                this.primaryStage.setScene(scene.getScene());
+                this.primaryStage.setFullScreen(true);
+            });
         });
 
         // Create the BorderPane as the root layout
@@ -42,37 +45,75 @@ public class InviteScene {
         listBoxes.setAlignment(Pos.CENTER);
         listBoxes.setStyle("-fx-pref-height: 300;-fx-pref-width: 300;");
 
-        listBoxes.getChildren().add(inviteBox);
-
-        setInviteBox();
-        inviteRefresher();
-
+        addInviteBox(listBoxes);
         addAcceptBox(listBoxes);
 
         root.setTop(Helper.getTitle());
         root.getStyleClass().add("background");
         root.setCenter(listBoxes);
+        root.setBottom(Helper.getBackButton(primaryStage, clientConnection, data -> {
+            this.clientConnection.leaveQueue();
+        }));
 
         Scene scene = new Scene(root, 600, 400);
         scene.getStylesheets().add(InviteScene.class.getResource("style.css").toExternalForm());
         return scene;
     }
-    public void inviteRefresher() {
-        Timeline timeline = new Timeline(
-                new KeyFrame(Duration.seconds(1), event -> {
-                    setInviteBox();
-                })
-        );
-        timeline.setCycleCount(Animation.INDEFINITE);
-        timeline.play();
+    private void removeRow(VBox box, String username) {
+        box.getChildren().removeIf(node -> {
+            if (node instanceof HBox) {
+                HBox hbox = (HBox) node;
+                return hbox.getChildren().stream()
+                    .filter(child -> child instanceof Label)
+                    .map(child -> (Label) child)
+                    .anyMatch(label -> username.equals(label.getText()));
+            }
+            return false;
+        });
     }
-    public void setInviteBox() {
-        inviteBox.getChildren().clear(); // clear previous instance
-        inviteBox.setStyle("""
-                -fx-pref-width: 250px;
-                -fx-pref-height: 500px;
-            """);
-        inviteBox.getStyleClass().addAll("general-box", "large-bubble");
+    public void addAcceptRow(VBox box, String username, Client clientConnection) {
+        HBox row = new HBox(20);
+        row.setStyle("""
+            -fx-padding: 3;
+            -fx-pref-width: 150px;
+        """);
+        Label label = new Label(username); // Create a label
+        label.getStyleClass().add("general-text");
+        Button button = new Button("Accept");
+        button.setOnAction(e -> {
+            clientConnection.acceptInvite(username);
+        });
+        button.getStyleClass().addAll("general-btn", "small-round", "bubble");
+
+        row.getChildren().addAll(label, button);
+        box.getChildren().add(row);
+    }
+    public void addInviteRow(VBox box, String username, Client clientConnection) {
+        HBox row = new HBox(20);
+        row.setStyle("""
+                        -fx-padding: 3;
+                        -fx-pref-width: 150px;
+                    """);
+        Label label = new Label(username); // Create a label
+        label.getStyleClass().add("general-text");
+        Button button = new Button("Invite"); // Create a button
+        button.setOnAction(e -> {
+            clientConnection.inviteUser(username);
+            button.setDisable(true);
+            button.setText("Invited!");
+        });
+        button.getStyleClass().addAll("general-btn", "small-round", "bubble");
+
+        row.getChildren().addAll(label, button);
+        box.getChildren().add(row);
+    }
+    public void addRow(VBox box, String username, String btnText, EventHandler btnEvent) {
+    }
+    public void addInviteBox(HBox box) {
+        VBox inviteBox = new VBox();
+        inviteBox.setPrefWidth(275);
+        inviteBox.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        inviteBox.getStyleClass().add("box");
 
         HBox titleRow = new HBox();
         titleRow.setStyle("-fx-alignment: center;-fx-pref-height: 50px");
@@ -80,62 +121,66 @@ public class InviteScene {
         title.setStyle("-fx-font-size: 15px");
         titleRow.getChildren().add(title);
         inviteBox.getChildren().add(titleRow);
+        inviteBox.setPadding(new Insets(0, 0, 0, 10));
 
+        ScrollPane inviteScroll = new ScrollPane();
+        inviteScroll.getStyleClass().add("large-bubble");
+        inviteScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        inviteScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        inviteScroll.setContent(inviteBox);
+        inviteScroll.setPrefWidth(275);
+        inviteScroll.setMaxHeight(350);
+        box.getChildren().add(inviteScroll);
+
+        // initialize on queue change callback
         this.clientConnection.getQueue(data -> {
             Platform.runLater(() -> {
-                System.out.println(data.getQueue());
                 for (String username : data.getQueue()) {
                     if (username.equals(clientConnection.getUsername())) // if it's our username
                         continue;
-                    HBox inviteRow = new HBox(20);
-                    inviteRow.setStyle("""
-                        -fx-padding: 3;
-                        -fx-pref-width: 150px;
-                    """);
-                    Label label = new Label(username); // Create a label
-                    label.getStyleClass().add("invite-text");
-                    Button button = new Button("Invite"); // Create a button
-                    button.setOnAction(e -> { // when invite button is pressed
-                        // send invite request to other client
-                        clientConnection.inviteUser(username);
-                    });
-                    button.getStyleClass().add("invite-btn");
+                    addInviteRow(inviteBox, username, this.clientConnection);
 
-                    inviteRow.getChildren().addAll(label, button);
-                    inviteBox.getChildren().add(inviteRow);
                 }
+            });
+
+            // initialize on queue change callback
+            this.clientConnection.onQueueChange(queueChange -> {
+                Platform.runLater(() -> {
+                    if (queueChange.getAddition()) {
+                        addInviteRow(inviteBox, queueChange.getChange(), this.clientConnection);
+                    } else {
+                        removeRow(inviteBox, queueChange.getChange());
+                    }
+                });
             });
         });
     }
     public void addAcceptBox(HBox box) {
         VBox acceptBox = new VBox();
-        acceptBox.setStyle("""
-            -fx-pref-width: 250px;
-            -fx-pref-height: 500px;
-        """);
-        acceptBox.getStyleClass().addAll("general-box", "large-bubble");
+        acceptBox.setPrefWidth(275);
+        acceptBox.setPrefHeight(Region.USE_COMPUTED_SIZE);
+        acceptBox.getStyleClass().add("accept-box");
 
         HBox titleRow = new HBox();
-        titleRow.setStyle("-fx-alignment: center;-fx-pref-height: 50;");
-        Label title = new Label("Invites");
+        titleRow.setStyle("-fx-alignment: center;-fx-pref-height: 50px");
+        Label title = new Label("Invite List");
         title.setStyle("-fx-font-size: 15px");
         titleRow.getChildren().add(title);
         acceptBox.getChildren().add(titleRow);
-        box.getChildren().addAll(acceptBox);
-        clientConnection.onInviteRequest(data -> {
-            Platform.runLater(() -> {
-                HBox acceptRow = new HBox();
-                acceptRow.setStyle("""
-                    -fx-padding: 10 3;
-                    -fx-pref-width: 150px;
-                                        """);
-                Label label = new Label(data.getUsername()); // Create a label
-                label.getStyleClass().add("accept-text");
-                Button button = new Button("Accept"); // Create a button
-                button.getStyleClass().add("accept-btn");
+        acceptBox.setPadding(new Insets(0, 0, 0, 10));
 
-                acceptRow.getChildren().addAll(label, button);
-                acceptBox.getChildren().add(acceptRow);
+        ScrollPane acceptScroll = new ScrollPane();
+        acceptScroll.getStyleClass().add("large-bubble");
+        acceptScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        acceptScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        acceptScroll.setContent(acceptBox);
+        acceptScroll.setPrefWidth(275);
+        acceptScroll.setMaxHeight(350);
+        box.getChildren().add(acceptScroll);
+        // initialize on invite request callback
+        this.clientConnection.onInviteRequest(inviteRequest -> {
+            Platform.runLater(() -> {
+                addAcceptRow(acceptBox, inviteRequest.getUsername(), this.clientConnection);
             });
         });
     }

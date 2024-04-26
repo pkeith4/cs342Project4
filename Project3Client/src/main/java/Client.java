@@ -23,6 +23,7 @@ public class Client extends Thread{
     Consumer<serverMessages.SendInvite> onInviteRequestCallback;
     Consumer<serverMessages.SendGameReady> onGameReadyCallback;
     Consumer<serverMessages.Shoot> onOpponentShootCallback;
+    Consumer<serverMessages.QueueChange> onQueueChangeCallback;
 
     Client() { /* do nothing */ }
 
@@ -30,7 +31,7 @@ public class Client extends Thread{
     public void run() {
         try {
             // connect to the server
-            socketClient = new Socket("127.0.0.1", 5555);
+            socketClient = new Socket("127.0.0.1", 5556);
             out = new ObjectOutputStream(socketClient.getOutputStream());
             in = new ObjectInputStream(socketClient.getInputStream());
             socketClient.setTcpNoDelay(true);
@@ -51,7 +52,6 @@ public class Client extends Thread{
                         onAcceptInviteCallback.accept(message);
                     } else if (obj instanceof serverMessages.GetQueue) {
                         serverMessages.GetQueue message = (serverMessages.GetQueue) obj;
-                        System.out.println("um: " + message.getQueue());
                         getQueueCallback.accept(message);
                     } else if (obj instanceof serverMessages.SendGameReady) {
                         serverMessages.SendGameReady message = (serverMessages.SendGameReady) obj;
@@ -62,6 +62,10 @@ public class Client extends Thread{
                     } else if (obj instanceof serverMessages.Shoot) {
                         serverMessages.Shoot message = (serverMessages.Shoot) obj;
                         onOpponentShootCallback.accept(message);
+                    } else if (obj instanceof serverMessages.QueueChange) {
+                        serverMessages.QueueChange message = (serverMessages.QueueChange) obj;
+                        if (this.onQueueChangeCallback != null)
+                            this.onQueueChangeCallback.accept(message);
                     } else {
                         throw new IllegalStateException("Unexpected object was sent: " + obj);
                     }
@@ -78,9 +82,14 @@ public class Client extends Thread{
         }
     }
 
+    public void leaveQueue() {
+        clientMessages.RemoveFromQueue message = new clientMessages.RemoveFromQueue();
+        writeToServer(message);
+    }
     private void writeToServer(Object message) {
         try {
             out.writeObject(message);
+            out.reset();
         } catch (IOException e) { /* do nothing */ }
     }
 
@@ -124,6 +133,9 @@ public class Client extends Thread{
     public void getQueue(Consumer<serverMessages.GetQueue> callback) {
         this.getQueueCallback = callback;
         writeToServer(new clientMessages.GetQueue());
+    }
+    public void onQueueChange(Consumer<serverMessages.QueueChange> callback) {
+        this.onQueueChangeCallback = callback;
     }
     /*
         wait for server to say an invitation was accepted

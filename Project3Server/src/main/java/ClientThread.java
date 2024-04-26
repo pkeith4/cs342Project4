@@ -2,6 +2,7 @@ import clientMessages.*;
 import gameLogic.Coordinate;
 import gameLogic.GameState;
 import serverMessages.*;
+import serverMessages.GetQueue;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -38,33 +39,33 @@ public class ClientThread extends Thread {
         while (true) {
             try {
                 Object obj = in.readObject();
-                switch (obj) {
-                    case clientMessages.AcceptInvite message:
-                        this.acceptInvite(message.getUsername());
-                        break;
-                    case clientMessages.AddToQueue message:
-                        this.addToQueue();
-                        break;
-                    case clientMessages.CreateUsername message:
-                        this.server.getServerCallback().accept("Incoming username...");
-                        this.createUsername(message.getUsername());
-                        break;
-                    case clientMessages.GetQueue message:
-                        this.server.getServerCallback().accept("Incoming get queue request...");
-                        this.getQueue();
-                        break;
-                    case clientMessages.InviteUser message:
-                        this.server.getServerCallback().accept("Incoming invite user request...");
-                        this.inviteUser(message.getUsername());
-                        break;
-                    case clientMessages.SendBoard message:
-                        this.addBoard(message.getBoard());
-                        break;
-                    case clientMessages.Shoot message:
-                        this.shoot(message.getCoord());
-                        break;
-                    default:
-                        throw new IllegalStateException("Unexpected object was sent: " + obj);
+                if (obj instanceof clientMessages.AcceptInvite) {
+                    clientMessages.AcceptInvite message = (clientMessages.AcceptInvite) obj;
+                    this.acceptInvite(message.getUsername());
+                } else if (obj instanceof clientMessages.AddToQueue) {
+                    this.addToQueue();
+                } else if (obj instanceof clientMessages.CreateUsername) {
+                    clientMessages.CreateUsername message = (clientMessages.CreateUsername) obj;
+                    this.server.getServerCallback().accept("Incoming username...");
+                    this.createUsername(message.getUsername());
+                } else if (obj instanceof clientMessages.GetQueue) {
+                    this.server.getServerCallback().accept("Incoming get queue request...");
+                    this.getQueue();
+                } else if (obj instanceof clientMessages.InviteUser) {
+                    clientMessages.InviteUser message = (clientMessages.InviteUser) obj;
+                    this.server.getServerCallback().accept("Incoming invite user request...");
+                    this.inviteUser(message.getUsername());
+                } else if (obj instanceof clientMessages.SendBoard) {
+                    clientMessages.SendBoard message = (clientMessages.SendBoard) obj;
+                    this.addBoard(message.getBoard());
+                } else if (obj instanceof clientMessages.Shoot) {
+                    clientMessages.Shoot message = (clientMessages.Shoot) obj;
+                    this.shoot(message.getCoord());
+                } else if (obj instanceof clientMessages.RemoveFromQueue) {
+                    clientMessages.RemoveFromQueue message = (clientMessages.RemoveFromQueue) obj;
+                    this.removeFromQueue();
+                } else {
+                    throw new IllegalStateException("Unexpected object was sent: " + obj);
                 }
             } catch (IOException | ClassNotFoundException e) {
                 server.getServerCallback().accept("Client #" + this.clientCount + " ran into an error, breaking out of read loop");
@@ -73,6 +74,9 @@ public class ClientThread extends Thread {
         }
     }
 
+    public void removeFromQueue() {
+        this.server.removeFromQueue(this.getUsername());
+    }
     // accept invite from a user
     public void acceptInvite(String username) {
         ClientThread client = this.server.getClient(username);
@@ -84,6 +88,9 @@ public class ClientThread extends Thread {
         if (this.server.getQueue().contains(username)) { // if user is still in the queue
             success = true;
             assignGameController(client);
+            // remove both users from queue
+            this.server.removeFromQueue(this.getUsername());
+            this.server.removeFromQueue(client.getUsername());
         }
 
         this.writeToClient(new serverMessages.AcceptInvite(success, username)); // send accept invite response to the client who sent accepted
@@ -180,14 +187,12 @@ public class ClientThread extends Thread {
             throw new IllegalStateException("You're trying to invite a user that doesn't exist");
         if (client == this)
             throw new IllegalStateException("A client cannot invite itself");
-        serverMessages.SendInvite message = new serverMessages.SendInvite(username);
+        serverMessages.SendInvite message = new serverMessages.SendInvite(this.getUsername());
         client.writeToClient(message); // send message to respective client
     }
     // write the queue received from the server to the client
     public void getQueue() {
         serverMessages.GetQueue message = new serverMessages.GetQueue(this.server.getQueue());
-
-        System.out.println(this.getUsername() + ": " + message.getQueue());
         writeToClient(message);
     }
     public void addToQueue() {
@@ -214,10 +219,16 @@ public class ClientThread extends Thread {
                 return true;
         return false;
     }
+    public void sendQueueChange(String username, boolean addition) {
+        serverMessages.QueueChange message = new serverMessages.QueueChange(username, addition);
+        writeToClient(message); // send to client
+
+    }
 
     private void writeToClient(Object message) {
         try {
             out.writeObject(message);
+            out.reset();
         } catch (IOException e) { /* do nothing */ }
     }
     public String getUsername() { return this.username; }

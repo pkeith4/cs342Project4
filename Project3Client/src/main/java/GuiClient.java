@@ -46,7 +46,7 @@ public class GuiClient extends Application {
 
 	public void setupPlacementScene() {
 		// Assuming PlacementScene is refactored to not extend Application
-		PlacementScene scene = new PlacementScene(primaryStage, true, clientConnection);
+		PlacementScene scene = new PlacementScene(primaryStage, true, null, clientConnection);
 		primaryStage.setScene(scene.getScene());
 		primaryStage.setFullScreen(true);
 	}
@@ -57,8 +57,8 @@ public class GuiClient extends Application {
 		primaryStage.setFullScreen(true);
 	}
 	public void setupEndScene(boolean won) {
-		Scene endScene = EndScene.createEndScene(won, primaryStage, clientConnection);
-		primaryStage.setScene(endScene);
+		EndScene endScene = new EndScene(won, primaryStage, clientConnection);
+		primaryStage.setScene(endScene.getScene());
 		primaryStage.setFullScreen(true);
 	}
 }

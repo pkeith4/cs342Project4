@@ -1,28 +1,46 @@
+import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.BorderPane;
+import javafx.scene.control.Label;
+import javafx.scene.layout.*;
 import javafx.scene.image.Image;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundImage;
-import javafx.scene.layout.BackgroundPosition;
-import javafx.scene.layout.BackgroundRepeat;
-import javafx.scene.layout.BackgroundSize;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
+import javafx.geometry.Insets;
+
+import java.util.ArrayList;
 
 public class PlacementScene {
     private static final int GRID_SIZE = 10;
     private Button[][] grid = new Button[GRID_SIZE][GRID_SIZE];
-    private boolean isVertical = true; // Assume default orientation is vertical
+    private boolean isVertical;
     private int currentShipSize = 5; // Starting with the largest ship
     private int[] shipSizes = {5, 4, 3, 3, 2}; // Ship sizes to be placed
     private int shipIndex = 0; // To track which ship size is currently being placed
     private Image shipBlock;
     private Image shipEnd;
     private Image background;
+    private Client clientConnection;
+    private Stage primaryStage;
+    private boolean isAI;
+    private String opponent;
+    private Label direction;
+    private ArrayList<ArrayList<Button>> cells;
+    private Scene scene;
+    private int currHoverX;
+    private int currHoverY;
+    private int[] ships = {2, 3, 3, 4, 5};
+    private int currShipI;
 
-    public PlacementScene() {
+    public PlacementScene(Stage primaryStage, boolean isAI, String opponent, Client clientConnection) {
+        this.primaryStage = primaryStage;
+        this.clientConnection = clientConnection;
+        this.isAI = isAI;
+        this.opponent = opponent;
+        this.cells = new ArrayList<>();
+        this.isVertical = false;
+        this.currHoverY = -1;
+        this.currHoverX = -1;
         loadImages();
     }
 
@@ -43,52 +61,121 @@ public class PlacementScene {
     public Scene getScene() {
         BorderPane root = new BorderPane();
         GridPane gridPane = createGrid();
-        root.setCenter(gridPane);
+        direction = new Label("");
+        VBox centerBox = new VBox();
+        centerBox.getChildren().addAll(direction, gridPane);
+        centerBox.setPrefWidth(400);
+        root.setCenter(centerBox);
+        root.setTop(Helper.getTitle());
+        initPlacement();
 
-        BackgroundImage bgImage = new BackgroundImage(background, BackgroundRepeat.REPEAT, BackgroundRepeat.REPEAT, BackgroundPosition.CENTER, BackgroundSize.DEFAULT);
-        root.setBackground(new Background(bgImage));
+        root.getStyleClass().add("background");
 
-        Scene scene = new Scene(root, 600, 600);
-        setupKeyBindings(scene);
+        scene = new Scene(root);
+        scene.getStylesheets().add(PlacementScene.class.getResource("style.css").toExternalForm());
+        initKeybinds(); // init keybinds function depends on the scene to be set
         return scene;
+    }
+    private void setDirection(String text) {
+        this.direction.setText(text);
+    }
+    private void initPlacement() {
+        currShipI = 0;
+       setDirection("Place a " + String.valueOf(ships[currShipI]) + " length ship");
+       for (int rowI = 0; rowI < GRID_SIZE; rowI++) {
+           ArrayList<Button> row = cells.get(rowI);
+           for (int colI = 0; colI < GRID_SIZE; colI++) {
+               Button cell = row.get(colI);
+               int finalColI = colI;
+               int finalRowI = rowI;
+               cell.setOnMouseEntered(e -> {
+                   hoverCell(finalColI, finalRowI, ships[currShipI]);
+               });
+           }
+       }
+    }
+    private void hoverCell(int colI, int rowI, int size) {
+        // update hover X & Y values
+        currHoverY = rowI;
+        currHoverX = colI;
+
+        clearHoverShip();
+        if (canPlayShip(colI, rowI, size)) {
+            showShip(colI, rowI, size);
+        } else {
+            // TODO set cell to X
+        }
+    }
+
+    private void initKeybinds() {
+        scene.setOnKeyPressed(event -> {
+            if (event.getCode() == KeyCode.R) {
+                isVertical = !isVertical;
+                if (currHoverX != -1 && currHoverY != -1) { // if there is a curr hover cell
+                    hoverCell(currHoverX, currHoverY, ships[currShipI]);
+                }
+            }
+        });
+    }
+
+    private void clearHoverShip() {
+        for (ArrayList<Button> row : this.cells) {
+            for (Button cell : row) {
+                if (cell.getStyleClass().contains("empty")) {
+                    if (cell.getStyleClass().contains("ship-center")) cell.getStyleClass().remove("ship-center");
+                    if (cell.getStyleClass().contains("ship-edge")) cell.getStyleClass().remove("ship-edge");
+                }
+            }
+        }
     }
 
     private GridPane createGrid() {
         GridPane gridPane = new GridPane();
+        BorderPane.setAlignment(gridPane, Pos.CENTER);
         gridPane.setHgap(5);
         gridPane.setVgap(5);
+        gridPane.setPrefWidth(400);
+        gridPane.setMaxWidth(400);
 
         for (int i = 0; i < GRID_SIZE; i++) {
+            ArrayList<Button> row = new ArrayList<>();
             for (int j = 0; j < GRID_SIZE; j++) {
                 Button button = new Button();
-                button.setPrefSize(30, 30);
-                button.setStyle("-fx-background-color: transparent;");
+                button.getStyleClass().addAll("cell", "empty");
+                button.setPrefSize(35, 35);
                 final int x = i, y = j;
-                button.setOnMouseEntered(e -> showShip(x, y));
-                button.setOnMouseExited(e -> clearShip());
-                button.setOnMouseClicked(e -> placeShip(x, y));
                 grid[i][j] = button;
                 gridPane.add(button, i, j);
+                row.add(button);
             }
+            cells.add(row);
         }
         return gridPane;
     }
 
-    private void showShip(int x, int y) {
-        try {
-            clearShip(); // Clear previously shown ships
-            for (int i = 0; i < currentShipSize; i++) {
-                int dx = isVertical ? 0 : i;
-                int dy = isVertical ? i : 0;
-                if (x + dx < GRID_SIZE && y + dy < GRID_SIZE) {
-                    Button btn = grid[x + dx][y + dy];
-                    btn.setBackground(new Background(new BackgroundImage(shipBlock,
-                            BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
-                            BackgroundSize.COVER)));
-                }
+    private boolean canPlayShip(int x, int y, int size) {
+        if (isVertical && y + size >= 9) return false;
+        if (!isVertical && x + size >= 9) return false;
+        for (int i = 0; i < size; i++) { // loop through every to-be occupied cell
+            if (isVertical) {
+                Button button = this.cells.get(y + i).get(x);
+                if (!button.getStyleClass().contains("empty")) return false;
+            } else {
+                Button button = this.cells.get(y).get(x + i);
+                System.out.println(button.getStyleClass().contains("empty"));
+                if (!button.getStyleClass().contains("empty")) return false;
             }
-        } catch (ArrayIndexOutOfBoundsException ignored) {
-            // Handle out of bounds
+        }
+        return true;
+    }
+    private void showShip(int x, int y, int size) {
+        for (int i = 0; i < size; i++) {
+            Button button;
+            if (isVertical)
+                button = this.cells.get(y + i).get(x);
+            else
+                button = this.cells.get(y).get(x + i);
+            button.getStyleClass().add("ship-center");
         }
     }
 
@@ -110,7 +197,7 @@ public class PlacementScene {
                     Button btn = grid[x + dx][y + dy];
                     btn.setBackground(new Background(new BackgroundImage(shipEnd,
                             BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
-                            BackgroundSize.COVER)));
+                            BackgroundSize.DEFAULT)));
                 }
             }
             shipIndex++;
@@ -122,14 +209,5 @@ public class PlacementScene {
         } catch (ArrayIndexOutOfBoundsException ignored) {
             // Handle out of bounds
         }
-    }
-
-    private void setupKeyBindings(Scene scene) {
-        scene.setOnKeyPressed(event -> {
-            if (event.getCode() == KeyCode.SPACE) {
-                isVertical = !isVertical; // Toggle orientation
-                System.out.println("Orientation changed to " + (isVertical ? "Vertical" : "Horizontal"));
-            }
-        });
     }
 }
