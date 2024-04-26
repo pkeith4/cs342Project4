@@ -39,38 +39,46 @@ public class ClientThread extends Thread {
         while (true) {
             try {
                 Object obj = in.readObject();
-                if (obj instanceof clientMessages.AcceptInvite) {
-                    clientMessages.AcceptInvite message = (clientMessages.AcceptInvite) obj;
-                    this.acceptInvite(message.getUsername());
-                } else if (obj instanceof clientMessages.AddToQueue) {
-                    this.addToQueue();
-                } else if (obj instanceof clientMessages.CreateUsername) {
-                    clientMessages.CreateUsername message = (clientMessages.CreateUsername) obj;
-                    this.server.getServerCallback().accept("Incoming username...");
-                    this.createUsername(message.getUsername());
-                } else if (obj instanceof clientMessages.GetQueue) {
-                    this.server.getServerCallback().accept("Incoming get queue request...");
-                    this.getQueue();
-                } else if (obj instanceof clientMessages.InviteUser) {
-                    clientMessages.InviteUser message = (clientMessages.InviteUser) obj;
-                    this.server.getServerCallback().accept("Incoming invite user request...");
-                    this.inviteUser(message.getUsername());
-                } else if (obj instanceof clientMessages.SendBoard) {
-                    clientMessages.SendBoard message = (clientMessages.SendBoard) obj;
-                    this.addBoard(message.getBoard());
-                } else if (obj instanceof clientMessages.Shoot) {
-                    clientMessages.Shoot message = (clientMessages.Shoot) obj;
-                    this.shoot(message.getCoord());
-                } else if (obj instanceof clientMessages.RemoveFromQueue) {
-                    clientMessages.RemoveFromQueue message = (clientMessages.RemoveFromQueue) obj;
-                    this.removeFromQueue();
-                } else {
-                    throw new IllegalStateException("Unexpected object was sent: " + obj);
-                }
+                handleCoenmmand(obj);
             } catch (IOException | ClassNotFoundException e) {
                 server.getServerCallback().accept("Client #" + this.clientCount + " ran into an error, breaking out of read loop");
                 break;
             }
+        }
+    }
+
+    private void handleCommand(Object obj) {
+        try {
+            if (obj instanceof clientMessages.AcceptInvite) {
+                clientMessages.AcceptInvite message = (clientMessages.AcceptInvite) obj;
+                this.acceptInvite(message.getUsername());
+            } else if (obj instanceof clientMessages.AddToQueue) {
+                this.addToQueue();
+            } else if (obj instanceof clientMessages.CreateUsername) {
+                clientMessages.CreateUsername message = (clientMessages.CreateUsername) obj;
+                this.server.getServerCallback().accept("Incoming username...");
+                this.createUsername(message.getUsername());
+            } else if (obj instanceof clientMessages.GetQueue) {
+                this.server.getServerCallback().accept("Incoming get queue request...");
+                this.getQueue();
+            } else if (obj instanceof clientMessages.InviteUser) {
+                clientMessages.InviteUser message = (clientMessages.InviteUser) obj;
+                this.server.getServerCallback().accept("Incoming invite user request...");
+                this.inviteUser(message.getUsername());
+            } else if (obj instanceof clientMessages.SendBoard) {
+                clientMessages.SendBoard message = (clientMessages.SendBoard) obj;
+                this.addBoard(message.getBoard());
+            } else if (obj instanceof clientMessages.Shoot) {
+                clientMessages.Shoot message = (clientMessages.Shoot) obj;
+                this.shoot(message.getCoord());
+            } else if (obj instanceof clientMessages.RemoveFromQueue) {
+                clientMessages.RemoveFromQueue message = (clientMessages.RemoveFromQueue) obj;
+                this.removeFromQueue();
+            } else {
+                server.getServerCallback().accept("Error: Unexpected command type received.");
+            }
+        } catch (Exception e) {
+            server.getServerCallback().accept("Error processing command: " + e.getMessage());
         }
     }
 
@@ -98,44 +106,56 @@ public class ClientThread extends Thread {
     }
 
     // shoot the shot on the board
-    public void shoot(gameLogic.Coordinate coord) {
+    public synchronized void shoot(gameLogic.Coordinate coord) {
         if (this.getPlayer() == null)
             throw new IllegalStateException("You're trying to shoot when your player is not initialized");
         if (this.gameController == null)
             throw new IllegalStateException("You're trying to shoot a shot when there isn't a game");
-        boolean result = this.gameController.makeMove(coord.getX(), coord.getY(), this.getPlayer());
 
-        boolean gameOver = this.gameController.getGameState() == GameState.FINISHED;
-        gameLogic.Coordinate[] revealedShip = null;
-        boolean hit = false;
-        if (result) {
-            hit = true;
-            revealedShip = this.getRevealedShip(coord);
+        try{
+            boolean result = this.gameController.makeMove(coord.getX(), coord.getY(), this.getPlayer());
+            boolean gameOver = this.gameController.getGameState() == GameState.FINISHED;
+            gameLogic.Coordinate[] revealedShip = null;
+            boolean hit = false;
+            if (result) {
+                hit = true;
+                revealedShip = this.getRevealedShip(coord);
+            }
+            this.sendShoot(coord, hit, revealedShip, gameOver); // send shoot object back to both clients
+        } catch (Exception e) {
+            server.getServerCallback().accept("Error during shooting action: " + e.getMessage());
         }
-        this.sendShoot(coord, hit, revealedShip, gameOver); // send shoot object back to both clients
     }
 
     // helper function to get the revealed ship given a coord of the hit
-    private gameLogic.Coordinate[] getRevealedShip(gameLogic.Coordinate coord) {
-        for (gameLogic.Ship ship : this.getPlayer().getBoard().getShips()) {
-             if (this.coordInShip(coord, ship) && ship.isSunk()) { // if coordinate is in ship, assume it was hit | also check that ship was sunk
-                 // convert ship to gameLogic.Coordinate[]
-                 return shipToList(ship);
-             }
+    private synchronized gameLogic.Coordinate[] getRevealedShip(gameLogic.Coordinate coord) {
+        try{
+            for (gameLogic.Ship ship : this.getPlayer().getBoard().getShips()) {
+                 if (this.coordInShip(coord, ship) && ship.isSunk()) { // if coordinate is in ship, assume it was hit | also check that ship was sunk
+                     // convert ship to gameLogic.Coordinate[]
+                     return shipToList(ship);
+                 }
+            }
+        } catch (Exception e) {
+            server.getServerCallback().accept("Error finding revealed ship: " + e.getMessage());
         }
         return null;
     }
 
-    private gameLogic.Coordinate[] shipToList(gameLogic.Ship ship) {
+    private synchronized gameLogic.Coordinate[] shipToList(gameLogic.Ship ship) {
         gameLogic.Coordinate[] list = new gameLogic.Coordinate[ship.getSize()];
-        for (int i = 0; i < ship.getSize(); i++) {
-            int x = ship.getStartX();
-            int y = ship.getStartY();
-            if (ship.isVertical())
-                y += i;
-            else
-                x += i;
-            list[i] = new Coordinate(x, y);
+        try {
+            for (int i = 0; i < ship.getSize(); i++) {
+                int x = ship.getStartX();
+                int y = ship.getStartY();
+                if (ship.isVertical())
+                    y += i;
+                else
+                    x += i;
+                list[i] = new Coordinate(x, y);
+            }
+        } catch (Exception e) {
+            server.getServerCallback().accept("Error converting ship to coordinate list: " + e.getMessage());
         }
         return list;
     }
@@ -157,29 +177,40 @@ public class ClientThread extends Thread {
         new serverMessages.Shoot(coord, hit, revealedShip, gameOver);
     }
     // process and add the board
-    public void addBoard(gameLogic.Board board) {
-        if (gameController.initializeBoard(this.player, board)) { // if true, game is ready to start
-            this.sendGameReady();
+    public synchronized void addBoard(gameLogic.Board board) {
+        try {
+            if (gameController.initializeBoard(this.player, board)) { // if true, game is ready to start
+                this.sendGameReady();
+            }
+        } catch (Exception e){
+            server.getServerCallback().accept("Error adding board: " + e.getMessage());
         }
     }
+
     // send game ready object to both clients apart from game
     public void sendGameReady() {
         serverMessages.SendGameReady message = new serverMessages.SendGameReady();
         this.writeToClient(message); // write to your own client
         this.opponent.writeToClient(message); // write to the other client, so they know it started as well
     }
+
     // assign game controller to itself and respective client
-    public void assignGameController(ClientThread client) {
-        gameLogic.Player player1 = this.getPlayer();
-        gameLogic.Player player2 = this.getPlayer();
-        if (player1 == null || player2 == null)
-            throw new IllegalStateException("Cannot assign gameController to a null player");
-        gameLogic.GameController gameController = new gameLogic.GameController(player1, player2);
-        client.setGameController(gameController);
-        this.setGameController(gameController);
-        this.setOpponent(client);
-        client.setOpponent(this);
+    public synchronized void assignGameController(ClientThread client) {
+        try {
+            gameLogic.Player player1 = this.getPlayer();
+            gameLogic.Player player2 = this.getPlayer();
+            if (player1 == null || player2 == null)
+                throw new IllegalStateException("Cannot assign gameController to a null player");
+            gameLogic.GameController gameController = new gameLogic.GameController(player1, player2);
+            client.setGameController(gameController);
+            this.setGameController(gameController);
+            this.setOpponent(client);
+            client.setOpponent(this);
+        } catch (Exception e) {
+            server.getServerCallback().accept("Error assigning game controller: " + e.getMessage());
+        }
     }
+
     // send message data about the invitation to the respected client
     public void inviteUser(String username) {
         ClientThread client = this.server.getClient(username);

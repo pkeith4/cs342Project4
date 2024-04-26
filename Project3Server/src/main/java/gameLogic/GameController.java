@@ -1,6 +1,8 @@
 // Interfaces with both the Board and the UI to update the game state based on user input and server messages.
 package gameLogic;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 public class GameController {
     private Player player1;
     private Player player2;
