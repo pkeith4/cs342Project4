@@ -4,8 +4,8 @@ package gameLogic;
 public class GameController {
     private Player player1;
     private Player player2;
-    private boolean player1Initialized;
-    private boolean player2Initialized;
+    private AtomicBoolean player1Initialized = new AtomicBoolean(false);
+    private AtomicBoolean player2Initialized = new AtomicBoolean(false);
     private GameState gameState;
 
     public GameController(Player player1, Player player2) {
@@ -14,43 +14,52 @@ public class GameController {
         this.gameState = GameState.SETUP;
     }
 
-    public void startGame() {
+    public synchronized void startGame() {
         gameState = GameState.IN_PROGRESS;
         player1.setTurn(true); // Randomly assign who starts or alternate
+        notifyAll(); // Notify any waiting threads that game has started
     }
 
-    public boolean initializeBoard(Player player, Board board) {
-        if (player == player1) {
-            player1Initialized = true;
+    public synchronized boolean initializeBoard(Player player, Board board) {
+        boolean initialized = false;
+        if (player == player1 && player1Initialized.compareAndSet(false, true)) {
             player1.setBoard(board);
-        } else if (player == player2) {
-            player2Initialized = true;
+            initialized = true;
+        } else if (player == player2 && player2Initialized.compareAndSet(false, true)) {
             player2.setBoard(board);
-        } else {
-            throw new IllegalStateException("Player must be apart of GameController");
+            initialized = true;
         }
 
-        if (player1Initialized && player2Initialized) {
-            startGame(); // start game automatically
+        if (!initialized) {
+            throw new IllegalStateException("Player must be part of GameController");
+        }
+
+        // Check if both players are initialized to start the game
+        if (player1Initialized.get() && player2Initialized.get()) {
+            startGame(); // Start game automatically
             return true;
         }
         return false;
     }
-    public boolean makeMove(int x, int y, Player player) {
+
+    public synchronized boolean makeMove(int x, int y, Player player) {
         if (gameState != GameState.IN_PROGRESS)
             throw new IllegalStateException("The game is not in progress.");
         if (!player.isTurn())
             throw new IllegalStateException("It's not your turn, " + player.getName());
+
         Player opponent = (player == player1) ? player2 : player1;
         boolean result = player.makeGuess(x, y, opponent);
+
         if (opponent.isAllShipsSunk()) {
-            System.out.println(player.getName() + " has won the game!");
             gameState = GameState.FINISHED;
+            notifyAll(); // Notify any waiting threads that game has finished
+            System.out.println(player.getName() + " has won the game!");
         }
         return result;
     }
 
-    public GameState getGameState() {
+    public synchronized GameState getGameState() {
         return gameState;
     }
 
