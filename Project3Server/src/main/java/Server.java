@@ -54,7 +54,7 @@ public class Server extends Thread {
             throw new IllegalStateException("Cannot add duplicate username to queue");
         }
         this.queue.add(username);
-        this.serverCallback.accept("Sending queue change to clients 1-" + String.valueOf(this.clientCounter));
+        this.serverCallback.accept("Sending queue change to clients 1-" + String.valueOf(this.clientCounter--));
         for (ClientThread client : this.clients) {
             client.sendQueueChange(username, true);
         }
