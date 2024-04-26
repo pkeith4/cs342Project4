@@ -56,4 +56,9 @@ public class GuiClient extends Application {
 		primaryStage.setScene(gameScene);
 		primaryStage.setFullScreen(true);
 	}
+	public void setupEndScene(boolean won) {
+		Scene endScene = EndScene.createEndScene(won, primaryStage, clientConnection);
+		primaryStage.setScene(endScene);
+		primaryStage.setFullScreen(true);
+	}
 }
