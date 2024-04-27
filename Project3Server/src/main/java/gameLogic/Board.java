@@ -3,8 +3,10 @@ package gameLogic;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.io.Serializable;
 
-public class Board {
+public class Board implements Serializable {
+  public static final long serialVersionUID = 1;
   private final int width;
   private final int height;
   private char[][] grid;
