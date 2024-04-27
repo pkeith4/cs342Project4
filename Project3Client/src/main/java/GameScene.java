@@ -15,106 +15,113 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 
-import java.util.List;
-
 public class GameScene {
+  private final int GRID_SIZE = 10;
+  private final String BACKGROUND_URL = "file:resources/images/background.png";
+  private final String FIRE_BUTTON_URL = "file:resources/images/Fire.png";
+  private final String HIT_IMAGE_URL = "file:resources/images/hitfinal.png";
+  private final String MISS_IMAGE_URL = "file:resources/images/missfinal.png";
+  private final String SHIP_IMAGE_URL = "file:resources/images/shipblockfinal.png";
 
-    private static final int GRID_SIZE = 10;
-    private static final String BACKGROUND_URL = "file:resources/images/background.png";
-    private static final String FIRE_BUTTON_URL = "file:resources/images/Fire.png";
-    private static final String HIT_IMAGE_URL = "file:resources/images/hitfinal.png";
-    private static final String MISS_IMAGE_URL = "file:resources/images/missfinal.png";
-    private static final String SHIP_IMAGE_URL = "file:resources/images/shipblockfinal.png";
+  private Stage primaryStage;
+  private Client clientConnection;
 
-    // Placeholder for game logic connections
-    private static gameLogic.Player player;
-    private static gameLogic.Player opponent;
-    private static gameLogic.Board playerBoard;
-    private static gameLogic.Board opponentBoard;
+  // Placeholder for game logic connections
+  private gameLogic.Player player;
+  private gameLogic.Player opponent;
+  private gameLogic.Board playerBoard;
+  private gameLogic.Board opponentBoard;
 
-    public static Scene createGameScene(Stage primaryStage) {
-        BorderPane layout = new BorderPane();
+  GameScene(Stage primaryStage, Client clientConnection) {
+    this.primaryStage = primaryStage;
+    this.clientConnection = clientConnection;
+  }
 
-        // Set background image to cover the entire background
-        BackgroundImage bgImage = new BackgroundImage(new Image(BACKGROUND_URL),
-                BackgroundRepeat.NO_REPEAT,
-                BackgroundRepeat.NO_REPEAT,
-                BackgroundPosition.CENTER,
-                new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true));
-        layout.setBackground(new Background(bgImage));
+  public Scene getScene() {
+    BorderPane layout = new BorderPane();
 
-        // Left side - Player's grid
-        GridPane playerGrid = createGrid(true);
-        // Right side - Opponent's grid
-        GridPane opponentGrid = createGrid(false);
+    // Set background image to cover the entire background
+    BackgroundImage bgImage = new BackgroundImage(new Image(BACKGROUND_URL),
+        BackgroundRepeat.NO_REPEAT,
+        BackgroundRepeat.NO_REPEAT,
+        BackgroundPosition.CENTER,
+        new BackgroundSize(BackgroundSize.AUTO, BackgroundSize.AUTO, false, false, true, true));
+    layout.setBackground(new Background(bgImage));
 
-        // Fire button in the center bottom
-        Button fireButton = new Button("Fire!");
-        fireButton.setGraphic(new ImageView(new Image(FIRE_BUTTON_URL)));
-        fireButton.setOnAction(e -> endUserTurn(primaryStage, player, opponent));
+    // Left side - Player's grid
+    GridPane playerGrid = createGrid(true);
+    // Right side - Opponent's grid
+    GridPane opponentGrid = createGrid(false);
 
-        HBox fireBox = new HBox(fireButton);
-        fireBox.setAlignment(Pos.CENTER);
+    // Fire button in the center bottom
+    Button fireButton = new Button("Fire!");
+    fireButton.setGraphic(new ImageView(new Image(FIRE_BUTTON_URL)));
+    fireButton.setOnAction(e -> endUserTurn(primaryStage, player, opponent));
 
-        layout.setLeft(playerGrid);
-        layout.setRight(opponentGrid);
-        layout.setBottom(fireBox);
+    HBox fireBox = new HBox(fireButton);
+    fireBox.setAlignment(Pos.CENTER);
 
-        return new Scene(layout, 800, 600);
-    }
+    layout.setLeft(playerGrid);
+    layout.setRight(opponentGrid);
+    layout.setBottom(fireBox);
 
+    Scene scene = new Scene(layout);
+    scene.getStylesheets().add(GameScene.class.getResource("style.css").toExternalForm());
+    return scene;
+  }
 
-    private static GridPane createGrid(boolean isPlayer) {
-        GridPane grid = new GridPane();
-        grid.setPadding(new Insets(5));
-        grid.setHgap(5);
-        grid.setVgap(5);
+  public GridPane createGrid(boolean isPlayer) {
+    GridPane grid = new GridPane();
+    grid.setPadding(new Insets(5));
+    grid.setHgap(5);
+    grid.setVgap(5);
 
-        for (int i = 0; i < GRID_SIZE; i++) {
-            for (int j = 0; j < GRID_SIZE; j++) {
-                Button button = new Button();
-                button.setPrefSize(30, 30);
-                button.setStyle("-fx-background-color: transparent;");
-                int x = i, y = j;
+    for (int i = 0; i < GRID_SIZE; i++) {
+      for (int j = 0; j < GRID_SIZE; j++) {
+        Button button = new Button();
+        button.setPrefSize(30, 30);
+        button.setStyle("-fx-background-color: transparent;");
+        int x = i, y = j;
 
-                if (isPlayer) {
-                    updateButtonBackground(button, x, y, playerBoard);
-                    button.setOnAction(e -> {});  // No action on player's own grid
-                } else {
-                    button.setOnAction(e -> handleOpponentAction(button, x, y));
-                }
-                grid.add(button, i, j);
-            }
+        if (isPlayer) {
+          updateButtonBackground(button, x, y, playerBoard);
+          button.setOnAction(e -> {
+          }); // No action on player's own grid
+        } else {
+          button.setOnAction(e -> handleOpponentAction(button, x, y));
         }
-        return grid;
+        grid.add(button, i, j);
+      }
     }
+    return grid;
+  }
 
-    private static void updateButtonBackground(Button button, int x, int y, gameLogic.Board board) {
-        if (board.getGrid()[y][x] == 'S') {
-            button.setBackground(new Background(new BackgroundImage(new Image(SHIP_IMAGE_URL),
-                    BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
-                    BackgroundSize.DEFAULT)));
-        }
+  private void updateButtonBackground(Button button, int x, int y, gameLogic.Board board) {
+    if (board.getGrid()[y][x] == 'S') {
+      button.setBackground(new Background(new BackgroundImage(new Image(SHIP_IMAGE_URL),
+          BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
+          BackgroundSize.DEFAULT)));
     }
+  }
 
-    private static void handleOpponentAction(Button button, int x, int y) {
-        // This should trigger a shoot event in your game logic
-        boolean hit = opponentBoard.recordHit(x, y);
-        Image img = new Image(hit ? HIT_IMAGE_URL : MISS_IMAGE_URL);
-        button.setGraphic(new ImageView(img));
-    }
+  private void handleOpponentAction(Button button, int x, int y) {
+    // This should trigger a shoot event in your game logic
+    boolean hit = opponentBoard.recordHit(x, y);
+    Image img = new Image(hit ? HIT_IMAGE_URL : MISS_IMAGE_URL);
+    button.setGraphic(new ImageView(img));
+  }
 
-    private static void endUserTurn(Stage primaryStage, gameLogic.Player currentPlayer, gameLogic.Player currentOpponent) {
-        System.out.println("Fire! Button pressed - End of turn.");
-        // Check game state and proceed accordingly
-        if (currentPlayer.isAllShipsSunk() || currentOpponent.isAllShipsSunk()) {
-            boolean won = currentOpponent.isAllShipsSunk();
-            // Proceed to end game scene
-            EndScene scene = new EndScene(won, primaryStage, null); // Assuming Client connection if needed
-            primaryStage.setScene(scene.getScene());
-        }
-        // Otherwise, toggle player turn
-        currentPlayer.setTurn(false);
-        currentOpponent.setTurn(true);
+  private void endUserTurn(Stage primaryStage, gameLogic.Player currentPlayer, gameLogic.Player currentOpponent) {
+    System.out.println("Fire! Button pressed - End of turn.");
+    // Check game state and proceed accordingly
+    if (currentPlayer.isAllShipsSunk() || currentOpponent.isAllShipsSunk()) {
+      boolean won = currentOpponent.isAllShipsSunk();
+      // Proceed to end game scene
+      EndScene scene = new EndScene(won, primaryStage, null); // Assuming Client connection if needed
+      primaryStage.setScene(scene.getScene());
     }
+    // Otherwise, toggle player turn
+    currentPlayer.setTurn(false);
+    currentOpponent.setTurn(true);
+  }
 }
