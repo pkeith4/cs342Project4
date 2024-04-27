@@ -39,7 +39,7 @@ public class ClientThread extends Thread {
         while (true) {
             try {
                 Object obj = in.readObject();
-                handleCoenmmand(obj);
+                handleCommand(obj);
             } catch (IOException | ClassNotFoundException e) {
                 server.getServerCallback().accept("Client #" + this.clientCount + " ran into an error, breaking out of read loop");
                 break;
