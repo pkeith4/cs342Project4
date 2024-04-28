@@ -4,14 +4,14 @@ import java.io.Serializable;
 
 public class SendGameReady implements Serializable {
   private static final long serialVersionUID = 1;
-  private String firstUsername;
+  private boolean goesFirst;
 
-  public SendGameReady(String firstUsername) {
-    this.firstUsername = firstUsername;
+  public SendGameReady(boolean goesFirst) {
+    this.goesFirst = goesFirst;
   }
 
-  public String getFirstUsername() {
-    return this.firstUsername;
+  public boolean goesFirst() {
+    return this.goesFirst;
   }
 
 }

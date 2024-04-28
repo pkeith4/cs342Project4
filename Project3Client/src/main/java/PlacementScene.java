@@ -115,7 +115,7 @@ public class PlacementScene {
                 Platform.runLater(() -> {
                   // switch to game scene
                   GameScene scene = new GameScene(primaryStage, isAI, opponent, clientConnection, gridPane,
-                      data.getFirstUsername());
+                      data.goesFirst());
                   primaryStage.setScene(scene.getScene());
                   primaryStage.setFullScreen(true);
                 });

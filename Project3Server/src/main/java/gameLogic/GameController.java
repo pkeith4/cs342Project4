@@ -58,4 +58,12 @@ public class GameController implements Serializable {
     return gameState;
   }
 
+  public Player getPlayer1() {
+    return this.player1;
+  }
+
+  public Player getPlayer2() {
+    return this.player2;
+  }
+
 }

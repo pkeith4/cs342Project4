@@ -33,10 +33,10 @@ public class GameScene {
   private gameLogic.Ship[] ships = new gameLogic.Ship[5];
   private GridPane leftGridPane;
   private GridPane rightGridPane;
-  private String firstUsername;
+  private boolean goesFirst;
 
   public GameScene(Stage primaryStage, boolean isAI, String opponent, Client clientConnection, GridPane leftGridPane,
-      String firstUsername) {
+      boolean goingFirst) {
     this.primaryStage = primaryStage;
     this.clientConnection = clientConnection;
     this.isAI = isAI;
@@ -46,7 +46,7 @@ public class GameScene {
     this.currHoverY = -1;
     this.currHoverX = -1;
     this.leftGridPane = leftGridPane;
-    this.firstUsername = firstUsername;
+    this.goesFirst = goesFirst;
     loadImages();
   }
 
@@ -90,8 +90,11 @@ public class GameScene {
 
     scene = new Scene(root);
     scene.getStylesheets().add(GameScene.class.getResource("style.css").toExternalForm());
-    initKeybinds(); // init keybinds function depends on the scene to be set
+    startMoves();
     return scene;
+  }
+
+  private void startMoves() {
   }
 
   private void setDirection(String text) {

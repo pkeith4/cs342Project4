@@ -211,9 +211,22 @@ public class ClientThread extends Thread {
 
   // send game ready object to both clients apart from game
   public void sendGameReady() {
-    serverMessages.SendGameReady message = new serverMessages.SendGameReady(this.getUsername());
-    this.writeToClient(message); // write to your own client
-    this.opponent.writeToClient(message); // write to the other client, so they know it started as well
+    this.writeToClient(new serverMessages.SendGameReady(this.gameController.getPlayer1() == this.player)); // write to
+                                                                                                           // your own
+                                                                                                           // client
+    this.opponent
+        .writeToClient(new serverMessages.SendGameReady(this.opponent.gameController.getPlayer1() == this.player)); // write
+                                                                                                                    // to
+                                                                                                                    // the
+                                                                                                                    // other
+                                                                                                                    // client,
+                                                                                                                    // so
+                                                                                                                    // they
+                                                                                                                    // know
+                                                                                                                    // it
+                                                                                                                    // started
+                                                                                                                    // as
+                                                                                                                    // well
   }
 
   // assign game controller to itself and respective client
