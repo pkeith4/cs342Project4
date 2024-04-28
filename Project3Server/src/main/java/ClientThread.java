@@ -41,13 +41,6 @@ public class ClientThread extends Thread {
         Object obj = in.readObject();
         handleCommand(obj);
       } catch (IOException | ClassNotFoundException e) {
-        System.out.println("Error encountered by Client #" + this.clientCount);
-        System.out.println("Exception Type: " + e.getClass().getSimpleName());
-        System.out.println("Exception Message: " + e.getMessage());
-
-        // Optional: Print the stack trace to the console for a detailed debug trace
-        System.out.println("Stack Trace:");
-        e.printStackTrace(System.out);
         server.getServerCallback()
             .accept("Client #" + this.clientCount + " ran into an error, breaking out of read loop");
         break;
@@ -215,7 +208,7 @@ public class ClientThread extends Thread {
                                                                                                            // your own
                                                                                                            // client
     this.opponent
-        .writeToClient(new serverMessages.SendGameReady(this.opponent.gameController.getPlayer1() == this.player)); // write
+        .writeToClient(new serverMessages.SendGameReady(this.gameController.getPlayer1() == this.opponent.player)); // write
                                                                                                                     // to
                                                                                                                     // the
                                                                                                                     // other

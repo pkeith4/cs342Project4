@@ -73,14 +73,14 @@ public class GameScene {
     BorderPane root = new BorderPane();
     HBox boxes = new HBox();
 
-    direction.getStyleClass().add("message");
     direction = new Label("");
+    direction.getStyleClass().add("message");
     VBox leftBox = new VBox();
     leftBox.getChildren().addAll(direction, this.leftGridPane);
     leftBox.setPrefWidth(400);
     leftBox.setAlignment(Pos.CENTER_LEFT);
 
-    this.rightGridPane = createGrid();
+    this.rightGridPane = createRightGrid();
     VBox rightBox = new VBox();
     rightBox.getChildren().addAll(rightGridPane, new Label());
     rightBox.setPrefWidth(400);
@@ -96,7 +96,39 @@ public class GameScene {
     scene = new Scene(root);
     scene.getStylesheets().add(GameScene.class.getResource("style.css").toExternalForm());
     startMoves();
+    initRightListeners();
     return scene;
+  }
+
+  private boolean canHitCell(Button cell) {
+    return !cell.getStyleClass().contains("miss") && !cell.getStyleClass().contains("hit")
+        && !cell.getStyleClass().contains("ship-center") && !cell.getStyleClass().contains("ship-edge");
+  }
+
+  private void initRightListeners() {
+    for (int rowI = 0; rowI < this.rightCells.size(); rowI++) {
+      ArrayList<Button> row = this.rightCells.get(rowI);
+      for (int colI = 0; colI < row.size(); colI++) {
+        Button cell = row.get(colI);
+        cell.setOnMouseEntered(e -> {
+          clearHovers(this.rightCells);
+          if (!this.currentTurn)
+            return;
+          if (!canHitCell(cell))
+            return;
+          cell.getStyleClass().add("hover");
+        });
+      }
+    }
+  }
+
+  private void clearHovers(ArrayList<ArrayList<Button>> cells) {
+    for (ArrayList<Button> row : cells) {
+      for (Button cell : row) {
+        if (cell.getStyleClass().contains("hover"))
+          cell.getStyleClass().remove("hover");
+      }
+    }
   }
 
   private void startMoves() {
@@ -114,6 +146,17 @@ public class GameScene {
   }
 
   private void applyOpponentHit(boolean hit, gameLogic.Coordinate coord) {
+    String className;
+    if (hit)
+      className = "miss";
+    else
+      className = "hit";
+    Button cell = this.leftCells.get(coord.getY()).get(coord.getX());
+    if (cell.getStyleClass().contains("ship-center"))
+      cell.getStyleClass().remove("ship-center");
+    if (cell.getStyleClass().contains("ship-edge"))
+      cell.getStyleClass().remove("ship-edge");
+    cell.getStyleClass().add(className);
   }
 
   private void setDirection(String text) {
@@ -163,7 +206,7 @@ public class GameScene {
     }
   }
 
-  private GridPane createGrid() {
+  private GridPane createRightGrid() {
     GridPane gridPane = new GridPane();
     BorderPane.setAlignment(gridPane, Pos.CENTER);
     gridPane.setHgap(5);
@@ -182,7 +225,7 @@ public class GameScene {
         gridPane.add(button, i, j);
         row.add(button);
       }
-      cells.add(row);
+      rightCells.add(row);
     }
     return gridPane;
   }
@@ -199,7 +242,6 @@ public class GameScene {
           return false;
       } else {
         Button button = this.cells.get(y).get(x + i);
-        System.out.println(button.getStyleClass().contains("empty"));
         if (!button.getStyleClass().contains("empty"))
           return false;
       }
