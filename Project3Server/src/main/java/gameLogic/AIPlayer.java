@@ -13,7 +13,7 @@ public class AIPlayer {
         this.player = new Player("AI");
         // need to implement random placement
         intializeAIShips();
-        this.player.setBoard(this.board);
+//        this.player.setBoard(this.board);
         this.player.setShips(this.board.getShips());
     }
 
@@ -39,5 +39,9 @@ public class AIPlayer {
 
     public Player getPlayer() {
         return player;
+    }
+
+    public Board getBoard() {
+        return board;
     }
 }

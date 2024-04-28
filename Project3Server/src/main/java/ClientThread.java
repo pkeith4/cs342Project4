@@ -177,20 +177,6 @@ public class ClientThread extends Thread {
 
 
   public void startGameAgainstAI() {
-//    isAIGame = true;
-//    ClientThread AI = new ClientThread(socket, clientCount, server, true);
-//    try{
-//      this.sleep(5000);
-//    } catch (Exception e) {
-//      server.getServerCallback().accept("Error waiting for AI thread: " + e.getMessage());
-//    }
-//    setOpponent(AI);
-//    AI.setOpponent(this);
-//    AI.setIn(in);
-//    AI.setOut(out);
-//    this.gameController = new gameLogic.GameController(player, AI.getPlayer());
-//    this.writeToClient(new serverMessages.SendGameReady(this.gameController.getPlayer1() == this.player));
-//    this.gameController.startGame();
     try {
       // Create a new socket for the AI to use
       Socket aiSocket = new Socket("127.0.0.1", 5556);
@@ -203,8 +189,7 @@ public class ClientThread extends Thread {
 
       // Link AI Player with this thread for game control
       this.gameController = new gameLogic.GameController(player, AI.getPlayer());
-      this.writeToClient(new serverMessages.SendGameReady(true));
-      this.gameController.startGame();
+      this.gameController.initializeBoard(AI.getPlayer(), AI.getPlayer().getBoard());
     } catch (IOException e) {
       server.getServerCallback().accept("Error setting up AI game: " + e.getMessage());
     }
