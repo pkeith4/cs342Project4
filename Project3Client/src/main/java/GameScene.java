@@ -71,20 +71,25 @@ public class GameScene {
 
   public Scene getScene() {
     BorderPane root = new BorderPane();
-    HBox boxes = new HBox();
+    HBox boxes = new HBox(10); // Adding a spacing of 10 pixels between children
+    boxes.setAlignment(Pos.CENTER); // Centering children within the HBox
 
     direction = new Label("");
     direction.getStyleClass().add("message");
     VBox leftBox = new VBox();
-    leftBox.getChildren().addAll(direction, this.leftGridPane);
+    leftBox.getChildren().addAll(direction, new Label("('r' to rotate)"), this.leftGridPane);
+
     leftBox.setPrefWidth(400);
-    leftBox.setAlignment(Pos.CENTER_LEFT);
+    leftBox.setAlignment(Pos.CENTER);
 
     this.rightGridPane = createRightGrid();
     VBox rightBox = new VBox();
-    rightBox.getChildren().addAll(rightGridPane, new Label());
+
+    Label fakeDirection = new Label("");
+    fakeDirection.getStyleClass().add("message");
+    rightBox.getChildren().addAll(fakeDirection, new Label("('r' to rotate)"), rightGridPane);
     rightBox.setPrefWidth(400);
-    rightBox.setAlignment(Pos.CENTER_LEFT);
+    rightBox.setAlignment(Pos.CENTER);
 
     boxes.getChildren().addAll(leftBox, rightBox);
 
@@ -93,7 +98,7 @@ public class GameScene {
 
     root.getStyleClass().add("background");
 
-    scene = new Scene(root);
+    Scene scene = new Scene(root);
     scene.getStylesheets().add(GameScene.class.getResource("style.css").toExternalForm());
     startMoves();
     initRightListeners();
@@ -160,6 +165,7 @@ public class GameScene {
         System.out.println("RECEIVED SHOOT");
         System.out.println(data.getCoordinate());
         System.out.println(data.getHit());
+        System.out.println(data.getRevealedShip());
         if (this.currentTurn) {
           applyOurHit(data.getHit(), data.getCoordinate(), data.getRevealedShip());
         } else {

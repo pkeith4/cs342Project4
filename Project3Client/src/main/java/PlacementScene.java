@@ -238,7 +238,10 @@ public class PlacementScene {
         button = this.cells.get(y + i).get(x);
       else
         button = this.cells.get(y).get(x + i);
-      button.getStyleClass().add("ship-center");
+      if (i == 0 || i + 1 == size)
+        button.getStyleClass().add("ship-edge");
+      else
+        button.getStyleClass().add("ship-center");
       if (permanent)
         button.getStyleClass().remove("empty"); // remove the empty signaller
     }
