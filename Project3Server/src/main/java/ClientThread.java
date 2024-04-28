@@ -123,7 +123,7 @@ public class ClientThread extends Thread {
       boolean hit = false;
       if (result) {
         hit = true;
-        revealedShip = this.getRevealedShip(coord);
+        revealedShip = this.opponent.getRevealedShip(coord);
       }
       this.sendShoot(coord, hit, revealedShip, gameOver); // send shoot object back to both clients
     } catch (Exception e) {
