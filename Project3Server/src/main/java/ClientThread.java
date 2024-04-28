@@ -22,24 +22,30 @@ public class ClientThread extends Thread {
   private gameLogic.GameController gameController;
   private boolean isAI;
   private AIPlayer ai;
+  private boolean isAIGame;
 
   ClientThread(Socket socket, int clientCount, Server server, boolean isAI) {
     this.socket = socket;
     this.clientCount = clientCount;
     this.server = server;
     this.isAI = isAI;
+    this.isAIGame = false;
 
     if(isAI) {
       server.getServerCallback().accept("AI Thread Succesfully started");
       instantiateAI();
+      this.player = ai.getPlayer();
+      this.isAIGame = true;
     }
   }
 
   public void run() {
     try {
-      in = new ObjectInputStream(socket.getInputStream());
-      out = new ObjectOutputStream(socket.getOutputStream());
-      socket.setTcpNoDelay(true);
+//      if(!isAI) {
+        in = new ObjectInputStream(socket.getInputStream());
+        out = new ObjectOutputStream(socket.getOutputStream());
+        socket.setTcpNoDelay(true);
+//      }
     } catch (Exception e) {
       server.getServerCallback().accept("Stream is not open, exiting program");
       return;
@@ -50,7 +56,9 @@ public class ClientThread extends Thread {
         Object obj = in.readObject();
         if(!isAI) {
           handleCommand(obj);
+          server.getServerCallback().accept("command Hnadler invoked");
         } else {
+          server.getServerCallback().accept("AIcommand Hnadler invoked");
           aiCommandHandler(obj);
         }
       } catch (IOException | ClassNotFoundException e) {
@@ -65,6 +73,7 @@ public class ClientThread extends Thread {
     try {
       if (obj instanceof clientMessages.SendBoard) {
         // Receive the board setup from the server.
+        server.getServerCallback().accept("AI Thread recieved sendBoard message");
         clientMessages.SendBoard message = (clientMessages.SendBoard) obj;
         this.addBoard(message.getBoard());
         if (isAI) {
@@ -73,7 +82,10 @@ public class ClientThread extends Thread {
       } else if (obj instanceof clientMessages.Shoot) {
         // Handle incoming shot from another player
         clientMessages.Shoot message = (clientMessages.Shoot) obj;
-        this.shoot(message.getCoord());
+        server.getServerCallback().accept("AI Thread recieved shot");
+        if(!message.getShotFromAI()) {
+          this.shoot(message.getCoord(), message.getShotFromAI());  // recieved from player
+        }
       } else if (obj instanceof clientMessages.RemoveFromQueue) {
         // If AI needs to be removed from queue, typically not needed for AI but included for completeness
         this.removeFromQueue();
@@ -92,7 +104,7 @@ public class ClientThread extends Thread {
   private void performAIActions() {
     // This method is where AI processes its strategies and makes moves
     Coordinate aiMove = this.ai.makeMove(); // Assuming AIPlayer class has a method to decide moves
-    shoot(aiMove); // AI performs a shoot based on its decision
+    shoot(aiMove, true); // AI performs a shoot based on its decision
   }
 
 
@@ -120,7 +132,11 @@ public class ClientThread extends Thread {
         this.addBoard(message.getBoard());
       } else if (obj instanceof clientMessages.Shoot) {
         clientMessages.Shoot message = (clientMessages.Shoot) obj;
-        this.shoot(message.getCoord());
+        if(isAIGame && !message.getShotFromAI()) {
+//          do nothing because client recieved shoot message from itself
+        } else {
+          this.shoot(message.getCoord(), message.getShotFromAI());
+        }
       } else if (obj instanceof clientMessages.RemoveFromQueue) {
         this.removeFromQueue();
       } else if (obj instanceof clientMessages.PlayAI) {
@@ -161,26 +177,52 @@ public class ClientThread extends Thread {
 
 
   public void startGameAgainstAI() {
-    ClientThread AI = new ClientThread(socket, clientCount, server, true);
-    try{
-      this.sleep(5000);
-    } catch (Exception e) {
-      server.getServerCallback().accept("Error waiting for AI thread: " + e.getMessage());
+//    isAIGame = true;
+//    ClientThread AI = new ClientThread(socket, clientCount, server, true);
+//    try{
+//      this.sleep(5000);
+//    } catch (Exception e) {
+//      server.getServerCallback().accept("Error waiting for AI thread: " + e.getMessage());
+//    }
+//    setOpponent(AI);
+//    AI.setOpponent(this);
+//    AI.setIn(in);
+//    AI.setOut(out);
+//    this.gameController = new gameLogic.GameController(player, AI.getPlayer());
+//    this.writeToClient(new serverMessages.SendGameReady(this.gameController.getPlayer1() == this.player));
+//    this.gameController.startGame();
+    try {
+      // Create a new socket for the AI to use
+      Socket aiSocket = new Socket("127.0.0.1", 5556);
+      isAIGame = true;
+      ClientThread AI = new ClientThread(aiSocket, clientCount, server, true);
+      AI.start();  // Start the AI thread
+
+      setOpponent(AI);
+      AI.setOpponent(this);
+
+      // Link AI Player with this thread for game control
+      this.gameController = new gameLogic.GameController(player, AI.getPlayer());
+      this.writeToClient(new serverMessages.SendGameReady(true));
+      this.gameController.startGame();
+    } catch (IOException e) {
+      server.getServerCallback().accept("Error setting up AI game: " + e.getMessage());
     }
-    this.gameController = new gameLogic.GameController(player, AI.getPlayer());
-    this.writeToClient(new serverMessages.SendGameReady(this.gameController.getPlayer1() == this.player));
-    removeFromQueue();
   }
 
   private void instantiateAI() {
     if(isAI) {
       this.ai = new AIPlayer();
-      server.getServerCallback().accept("AI started");
+      if(this.ai != null) {
+        server.getServerCallback().accept("AI Initialized");
+      } else {
+        server.getServerCallback().accept("AI Initialization failed");
+      }
     }
   }
 
   // shoot the shot on the board
-  public synchronized void shoot(gameLogic.Coordinate coord) {
+  public synchronized void shoot(gameLogic.Coordinate coord, boolean shotFromAI) {
     if (this.getPlayer() == null)
       throw new IllegalStateException("You're trying to shoot when your player is not initialized");
     if (this.gameController == null)
@@ -256,9 +298,8 @@ public class ClientThread extends Thread {
   }
 
   // send shoot object to both client playing the game
-  public void sendShoot(gameLogic.Coordinate coord, boolean hit, gameLogic.Coordinate[] revealedShip,
-      boolean gameOver) {
-    serverMessages.Shoot message = new serverMessages.Shoot(coord, hit, revealedShip, gameOver);
+  public void sendShoot(gameLogic.Coordinate coord, boolean hit, gameLogic.Coordinate[] revealedShip, boolean gameOver) {
+    serverMessages.Shoot message = new serverMessages.Shoot(coord, hit, revealedShip, gameOver, isAI);
     // send message to both clients
     this.writeToClient(message);
     this.opponent.writeToClient(message);
@@ -386,5 +427,19 @@ public class ClientThread extends Thread {
 
   public void setOpponent(ClientThread client) {
     this.opponent = client;
+  }
+
+  public void setOut(ObjectOutputStream out) {
+    this.out = out;
+    if(isAI && out != null){
+      server.getServerCallback().accept("AI outputStream succesfully set");
+    }
+  }
+
+  public void setIn(ObjectInputStream in) {
+    this.in = in;
+    if(isAI && in != null ){
+      server.getServerCallback().accept("AI inputStream succesfully set");
+    }
   }
 }

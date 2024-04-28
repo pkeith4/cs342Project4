@@ -109,7 +109,7 @@ public class Client extends Thread {
 
   // Make a hit on the opponents ship
   public void shoot(int row, int col) {
-    clientMessages.Shoot message = new clientMessages.Shoot(new gameLogic.Coordinate(row, col));
+    clientMessages.Shoot message = new clientMessages.Shoot(new gameLogic.Coordinate(row, col), false);
     writeToServer(message);
   }
 

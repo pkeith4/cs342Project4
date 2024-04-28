@@ -8,12 +8,14 @@ public class Shoot implements Serializable {
     private gameLogic.Coordinate[] revealedShip;
     private boolean gameOver;
     private final gameLogic.Coordinate coord;
+    private boolean shotFromAI;
 
-    public Shoot(gameLogic.Coordinate coord, boolean hit, gameLogic.Coordinate[] revealedShip, boolean gameOver) {
+    public Shoot(gameLogic.Coordinate coord, boolean hit, gameLogic.Coordinate[] revealedShip, boolean gameOver, boolean shotFromAI) {
         this.coord = coord;
         this.hit = hit;
         this.revealedShip = revealedShip;
         this.gameOver = gameOver;
+        this.shotFromAI = shotFromAI;
     }
 
     public gameLogic.Coordinate getCoordinate() { return coord; }
