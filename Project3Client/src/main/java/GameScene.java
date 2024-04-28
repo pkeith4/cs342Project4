@@ -1,3 +1,4 @@
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -33,10 +34,12 @@ public class GameScene {
   private gameLogic.Ship[] ships = new gameLogic.Ship[5];
   private GridPane leftGridPane;
   private GridPane rightGridPane;
-  private boolean goesFirst;
+  private boolean currentTurn;
+  private ArrayList<ArrayList<Button>> leftCells;
+  private ArrayList<ArrayList<Button>> rightCells;
 
   public GameScene(Stage primaryStage, boolean isAI, String opponent, Client clientConnection, GridPane leftGridPane,
-      boolean goingFirst) {
+      boolean goesFirst, ArrayList<ArrayList<Button>> leftCells) {
     this.primaryStage = primaryStage;
     this.clientConnection = clientConnection;
     this.isAI = isAI;
@@ -46,7 +49,9 @@ public class GameScene {
     this.currHoverY = -1;
     this.currHoverX = -1;
     this.leftGridPane = leftGridPane;
-    this.goesFirst = goesFirst;
+    this.currentTurn = goesFirst;
+    this.leftCells = leftCells;
+    this.rightCells = new ArrayList<>();
     loadImages();
   }
 
@@ -95,6 +100,20 @@ public class GameScene {
   }
 
   private void startMoves() {
+    if (this.currentTurn) {
+      setDirection("Your turn! Take and aim and shoot!");
+    } else {
+      setDirection("Waiting for opponent to shoot...");
+      clientConnection.onOpponentShoot(data -> {
+        Platform.runLater(() -> {
+          // reflect enemy shot
+          applyOpponentHit(data.getHit(), data.getCoordinate());
+        });
+      });
+    }
+  }
+
+  private void applyOpponentHit(boolean hit, gameLogic.Coordinate coord) {
   }
 
   private void setDirection(String text) {
