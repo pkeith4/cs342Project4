@@ -232,20 +232,26 @@ public class PlacementScene {
   }
 
   private void placeShip(int x, int y, int size, boolean permanent) {
+    Button button;
     for (int i = 0; i < size; i++) {
-      Button button;
       if (isVertical)
         button = this.cells.get(y + i).get(x);
       else
         button = this.cells.get(y).get(x + i);
       button.getStyleClass().add("ship-center");
-      if (permanent) {// if you are permanently placing the ship
+      if (permanent)
         button.getStyleClass().remove("empty"); // remove the empty signaller
-        for (int j = 0; j < 5; j++) { // iterate through ships
-          if (ships[j] == null) { // if ship hasn't been assigned yet
-            ships[j] = new Ship(size, x, y, isVertical); // add Ship to finished ships
-            continue;
-          }
+    }
+
+    if (permanent) {// if you are permanently placing the ship
+      if (isVertical)
+        button = this.cells.get(y).get(x);
+      else
+        button = this.cells.get(y).get(x);
+      for (int j = 0; j < 5; j++) { // iterate through ships
+        if (ships[j] == null) { // if ship hasn't been assigned yet
+          ships[j] = new Ship(size, y, x, !isVertical); // add Ship to finished ships
+          return;
         }
       }
     }

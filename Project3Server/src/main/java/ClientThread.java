@@ -3,7 +3,7 @@ import gameLogic.Coordinate;
 import gameLogic.GameState;
 import serverMessages.*;
 import serverMessages.GetQueue;
-
+import java.util.ArrayList;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -188,12 +188,18 @@ public class ClientThread extends Thread {
   // send shoot object to both client playing the game
   public void sendShoot(gameLogic.Coordinate coord, boolean hit, gameLogic.Coordinate[] revealedShip,
       boolean gameOver) {
-    new serverMessages.Shoot(coord, hit, revealedShip, gameOver);
+    serverMessages.Shoot message = new serverMessages.Shoot(coord, hit, revealedShip, gameOver);
+    // send message to both clients
+    this.writeToClient(message);
+    this.opponent.writeToClient(message);
   }
 
   // process and add the board
   public synchronized void addBoard(gameLogic.Board board) {
     try {
+      System.out.println("my ships " + this.getUsername() + ":");
+      System.out.println(board.getShips());
+      this.player.setShips(board.getShips());
       if (gameController.initializeBoard(this.player, board)) { // if true, game is ready to start
         this.sendGameReady();
       }

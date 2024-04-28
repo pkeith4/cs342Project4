@@ -25,21 +25,18 @@ public class Board implements Serializable {
   }
 
   public boolean placeShip(Ship ship) {
-    if (canPlaceShip(ship)) {
-      ships.add(ship);
-      int x = ship.getStartX();
-      int y = ship.getStartY();
+    ships.add(ship);
+    int x = ship.getStartX();
+    int y = ship.getStartY();
 
-      for (int i = 0; i < ship.getSize(); i++) {
-        if (ship.isVertical()) {
-          grid[y + i][x] = 'S';
-        } else {
-          grid[y][x + i] = 'S';
-        }
+    for (int i = 0; i < ship.getSize(); i++) {
+      if (ship.isVertical()) {
+        grid[y + i][x] = 'S';
+      } else {
+        grid[y][x + i] = 'S';
       }
-      return true;
     }
-    return false;
+    return true;
   }
 
   public boolean canPlaceShip(Ship ship) {

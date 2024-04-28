@@ -110,6 +110,8 @@ public class GameScene {
       ArrayList<Button> row = this.rightCells.get(rowI);
       for (int colI = 0; colI < row.size(); colI++) {
         Button cell = row.get(colI);
+        int finalColI = colI;
+        int finalRowI = rowI;
         cell.setOnMouseEntered(e -> {
           clearHovers(this.rightCells);
           if (!this.currentTurn)
@@ -117,6 +119,19 @@ public class GameScene {
           if (!canHitCell(cell))
             return;
           cell.getStyleClass().add("hover");
+        });
+        cell.setOnMouseClicked(e -> {
+          clearHovers(this.rightCells);
+          if (!this.currentTurn)
+            return;
+          if (!canHitCell(cell)) {
+            setDirection("You cannot shoot on that occupied cell.");
+            return;
+          }
+          System.out.println("Shooting!!");
+          // code to shoot the cell
+          clientConnection.shoot(finalRowI, finalColI);
+          // wait for server to respond and trigger the onOpponentShoot callback function
         });
       }
     }
@@ -134,24 +149,76 @@ public class GameScene {
   private void startMoves() {
     if (this.currentTurn) {
       setDirection("Your turn! Take and aim and shoot!");
+      // wait for mouse click event from already initialized events from cells
     } else {
       setDirection("Waiting for opponent to shoot...");
-      clientConnection.onOpponentShoot(data -> {
-        Platform.runLater(() -> {
+    }
+
+    // initialize shoot callback function
+    clientConnection.onOpponentShoot(data -> {
+      Platform.runLater(() -> {
+        System.out.println("RECEIVED SHOOT");
+        System.out.println(data.getCoordinate());
+        System.out.println(data.getHit());
+        if (this.currentTurn) {
+          applyOurHit(data.getHit(), data.getCoordinate(), data.getRevealedShip());
+        } else {
           // reflect enemy shot
           applyOpponentHit(data.getHit(), data.getCoordinate());
-        });
+        }
+        if (data.getGameOver()) {
+          EndScene scene = new EndScene(this.currentTurn, primaryStage, clientConnection);
+          primaryStage.setScene(scene.getScene());
+          primaryStage.setFullScreen(true);
+        }
+        swapTurn();
       });
+    });
+  }
+
+  private void swapTurn() {
+    this.currentTurn = !this.currentTurn;
+    if (this.currentTurn) {
+      setDirection("Your turn! Take and aim and shoot!");
+      // wait for mouse click event from already initialized events from cells
+    } else {
+      setDirection("Waiting for opponent to shoot...");
+    }
+  }
+
+  private void applyOurHit(boolean hit, gameLogic.Coordinate coord, gameLogic.Coordinate[] revealedShip) {
+    if (revealedShip == null) {
+      String className;
+      if (hit)
+        className = "hit";
+      else
+        className = "miss";
+      this.rightCells.get(coord.getX()).get(coord.getY()).getStyleClass().add(className);
+    } else {
+      for (int i = 0; i < revealedShip.length; i++) {
+        gameLogic.Coordinate cellCoord = revealedShip[i];
+        String className;
+        if (i == 0 || revealedShip.length - 1 == i)
+          className = "ship-edge";
+        else
+          className = "ship-center";
+        Button cell = this.rightCells.get(cellCoord.getX()).get(cellCoord.getY());
+        if (cell.getStyleClass().contains("hit"))
+          cell.getStyleClass().remove("hit");
+        if (cell.getStyleClass().contains("miss"))
+          cell.getStyleClass().remove("miss");
+        cell.getStyleClass().add(className);
+      }
     }
   }
 
   private void applyOpponentHit(boolean hit, gameLogic.Coordinate coord) {
     String className;
     if (hit)
-      className = "miss";
-    else
       className = "hit";
-    Button cell = this.leftCells.get(coord.getY()).get(coord.getX());
+    else
+      className = "miss";
+    Button cell = this.leftCells.get(coord.getX()).get(coord.getY());
     if (cell.getStyleClass().contains("ship-center"))
       cell.getStyleClass().remove("ship-center");
     if (cell.getStyleClass().contains("ship-edge"))

@@ -23,6 +23,10 @@ public class Player implements Serializable {
     this.board = board;
   }
 
+  public void setShips(List<Ship> ships) {
+    this.ships = ships;
+  }
+
   public boolean makeGuess(int x, int y, Player opponent) {
     if (!isTurn)
       throw new IllegalStateException(name + ", it's not your turn!");
@@ -48,7 +52,11 @@ public class Player implements Serializable {
   }
 
   public boolean isAllShipsSunk() {
+    System.out.println("this my ships");
+    System.out.println(this.ships);
     for (Ship ship : ships) {
+      System.out.println(String.valueOf(ship.getStartX()) + ", " + String.valueOf(ship.getStartY()) + ") "
+          + String.valueOf(ship.isVertical()) + " " + String.valueOf(ship.getSize()));
       if (!ship.isSunk()) {
         return false;
       }
