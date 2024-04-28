@@ -7,25 +7,16 @@
  private Random random;
 
  public AIPlayer() {
-     this.board = new board;
+     this.board = new Board();
      this.random = new Random();
      // need to implement random placement
-     intializeShips(board);
+     intializeAIShips();
  }
 
- private void intializeShips(board board){
-     int[] shipSize = [2, 2, 3, 4, 5];
-     for (int size: shipSizes) {
-      Ship ship = new Ship(size);
-      boolean placed = false;
-      while (!placed) {
-       int x = random.nextInt(10);
-       int y = random.nextInt(10);
-       boolean vertical = random.nextBoolean();
-       placed = board.placeShip(ship, x, y, vertical);
-      }
-     }
- }
+private void intializeAIShips() {
+  board.intializeShips();
+  board.printBoard();
+}
 
  public Coordinate makeMove() {
   // Implement the logic to decide a move
@@ -37,7 +28,7 @@
   do {
    x = random.nextInt(10);
    y = random.nextInt(10);
-  } while (!board.isValidMove(x, y));
+  } while (!MoveValidator.isValidMove(x, y, board));
 
   return new Coordinate(x, y);
   }
