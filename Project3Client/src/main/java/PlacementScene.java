@@ -1,3 +1,4 @@
+import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
@@ -6,17 +7,16 @@ import javafx.scene.layout.*;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
 import javafx.stage.Stage;
-import javafx.geometry.Insets;
 
 import java.util.ArrayList;
+
+import gameLogic.Board;
+import gameLogic.Ship;
 
 public class PlacementScene {
   private static final int GRID_SIZE = 10;
   private Button[][] grid = new Button[GRID_SIZE][GRID_SIZE];
   private boolean isVertical;
-  private int currentShipSize = 5; // Starting with the largest ship
-  private int[] shipSizes = { 5, 4, 3, 3, 2 }; // Ship sizes to be placed
-  private int shipIndex = 0; // To track which ship size is currently being placed
   private Image shipBlock;
   private Image shipEnd;
   private Image background;
@@ -29,8 +29,10 @@ public class PlacementScene {
   private Scene scene;
   private int currHoverX;
   private int currHoverY;
-  private int[] ships = { 2, 3, 3, 4, 5 };
+  private int[] shipSizes = { 2, 3, 3, 4, 5 };
   private int currShipI;
+  private gameLogic.Ship[] ships = new gameLogic.Ship[5];
+  private GridPane gridPane;
 
   public PlacementScene(Stage primaryStage, boolean isAI, String opponent, Client clientConnection) {
     this.primaryStage = primaryStage;
@@ -60,11 +62,13 @@ public class PlacementScene {
 
   public Scene getScene() {
     BorderPane root = new BorderPane();
-    GridPane gridPane = createGrid();
+    this.gridPane = createGrid();
     direction = new Label("");
+    direction.getStyleClass().add("message");
     VBox centerBox = new VBox();
     centerBox.getChildren().addAll(direction, gridPane);
     centerBox.setPrefWidth(400);
+    centerBox.setAlignment(Pos.CENTER);
     root.setCenter(centerBox);
     root.setTop(Helper.getTitle());
     initPlacement();
@@ -78,12 +82,12 @@ public class PlacementScene {
   }
 
   private void setDirection(String text) {
-
+    this.direction.setText(text);
   }
 
   private void initPlacement() {
     currShipI = 0;
-    setDirection("Place a " + String.valueOf(ships[currShipI]) + " length ship");
+    setDirection("Place a " + String.valueOf(shipSizes[currShipI]) + " length ship");
     for (int rowI = 0; rowI < GRID_SIZE; rowI++) {
       ArrayList<Button> row = cells.get(rowI);
       for (int colI = 0; colI < GRID_SIZE; colI++) {
@@ -91,21 +95,53 @@ public class PlacementScene {
         int finalColI = colI;
         int finalRowI = rowI;
         cell.setOnMouseEntered(e -> {
-          hoverCell(finalColI, finalRowI, ships[currShipI]);
+          if (currShipI >= 5)
+            return;
+          hoverCell(finalColI, finalRowI, shipSizes[currShipI]);
         });
         cell.setOnMouseClicked(e -> {
+          if (currShipI >= 5)
+            return;
           clearHoverImgs();
-          if (canPlaceShip(finalColI, finalRowI, ships[currShipI])) {
-            placeShip(finalColI, finalRowI, ships[currShipI], true);
+          if (canPlaceShip(finalColI, finalRowI, shipSizes[currShipI])) {
+            placeShip(finalColI, finalRowI, shipSizes[currShipI], true);
             currShipI++;
-          }
-          // check if all ships have been placed
-          if (currShipI == ships.length - 1) {
-            // TODO: init callback function for game ready, notify user they're waiting
+
+            // check if all shipSizes have been placed
+            if (currShipI == 5) { // not shipSizes.length - 1 to adjust for the recently incremented currShipI
+              // notify user they're waiting
+              setDirection("Waiting for " + this.opponent + " to finish placing ships...");
+              clientConnection.onGameReady(data -> { // when game is ready, callback function will be triggered
+                Platform.runLater(() -> {
+                  // switch to game scene
+                  GameScene scene = new GameScene(primaryStage, isAI, opponent, clientConnection, gridPane,
+                      data.goesFirst(), this.cells);
+                  primaryStage.setScene(scene.getScene());
+                  primaryStage.setFullScreen(true);
+                });
+              });
+              /*
+               * only after the game ready callback is initialized,
+               * send the board to the server. If the board is the last
+               * board, the server will respond with a game ready object
+               * near instantly. We don't want a race condition
+               */
+              clientConnection.sendBoard(getBoard());
+            } else {
+              setDirection("Place a " + String.valueOf(shipSizes[currShipI]) + " length ship");
+            }
           }
         });
       }
     }
+  }
+
+  private Board getBoard() {
+    Board board = new Board();
+    for (gameLogic.Ship ship : ships) {
+      board.placeShip(ship);
+    }
+    return board;
   }
 
   private void hoverCell(int colI, int rowI, int size) {
@@ -126,7 +162,7 @@ public class PlacementScene {
       if (event.getCode() == KeyCode.R) {
         isVertical = !isVertical;
         if (currHoverX != -1 && currHoverY != -1) { // if there is a curr hover cell
-          hoverCell(currHoverX, currHoverY, ships[currShipI]);
+          hoverCell(currHoverX, currHoverY, shipSizes[currShipI]);
         }
       }
     });
@@ -203,41 +239,15 @@ public class PlacementScene {
       else
         button = this.cells.get(y).get(x + i);
       button.getStyleClass().add("ship-center");
-      if (permanent) // if you are permanently placing the ship
+      if (permanent) {// if you are permanently placing the ship
         button.getStyleClass().remove("empty"); // remove the empty signaller
-    }
-  }
-
-  private void clearShip() {
-    for (int i = 0; i < GRID_SIZE; i++) {
-      for (int j = 0; j < GRID_SIZE; j++) {
-        grid[i][j].setStyle("-fx-background-color: transparent;");
-      }
-    }
-  }
-
-  private void placeShip(int x, int y) {
-    if (shipIndex >= shipSizes.length)
-      return; // Check if all ships are placed
-    try {
-      for (int i = 0; i < currentShipSize; i++) {
-        int dx = isVertical ? 0 : i;
-        int dy = isVertical ? i : 0;
-        if (x + dx < GRID_SIZE && y + dy < GRID_SIZE) {
-          Button btn = grid[x + dx][y + dy];
-          btn.setBackground(new Background(new BackgroundImage(shipEnd,
-              BackgroundRepeat.NO_REPEAT, BackgroundRepeat.NO_REPEAT, BackgroundPosition.CENTER,
-              BackgroundSize.DEFAULT)));
+        for (int j = 0; j < 5; j++) { // iterate through ships
+          if (ships[j] == null) { // if ship hasn't been assigned yet
+            ships[j] = new Ship(size, x, y, isVertical); // add Ship to finished ships
+            continue;
+          }
         }
       }
-      shipIndex++;
-      if (shipIndex < shipSizes.length) {
-        currentShipSize = shipSizes[shipIndex]; // Update to next ship size
-      } else {
-        System.out.println("All ships placed");
-      }
-    } catch (ArrayIndexOutOfBoundsException ignored) {
-      // Handle out of bounds
     }
   }
 }

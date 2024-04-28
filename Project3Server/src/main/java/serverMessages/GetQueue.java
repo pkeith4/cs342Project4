@@ -8,7 +8,7 @@ public class GetQueue implements Serializable {
     private ArrayList<String> queue;
 
     public GetQueue(ArrayList<String> queue) {
-        this.queue = queue;
+       this.queue = queue;
     }
 
     // return a list of the queue of players waiting to join a game
