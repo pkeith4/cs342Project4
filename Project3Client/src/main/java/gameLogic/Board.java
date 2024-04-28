@@ -4,6 +4,7 @@ package gameLogic;
 import java.util.List;
 import java.util.ArrayList;
 import java.io.Serializable;
+import java.util.Random;
 
 public class Board implements Serializable {
   public static final long serialVersionUID = 1;
@@ -11,6 +12,7 @@ public class Board implements Serializable {
   private final int height;
   private char[][] grid;
   private List<Ship> ships;
+  private Random random;
 
   public Board() {
     this.width = 10;
@@ -22,6 +24,7 @@ public class Board implements Serializable {
       }
     }
     this.ships = new ArrayList<>();
+    this.random = new Random();
   }
 
   public boolean placeShip(Ship ship) {
@@ -88,5 +91,41 @@ public class Board implements Serializable {
 
   public List<Ship> getShips() {
     return this.ships;
+  }
+
+  // used by the ai to randomly place ships
+  public void intializeShips() {
+    int[] shipSizes = { 2, 3, 3, 4, 5 };
+    for (int size : shipSizes) {
+      boolean placed = false;
+      while (!placed) {
+        int x = random.nextInt(10);
+        int y = random.nextInt(10);
+        boolean vertical = random.nextBoolean();
+        Ship ship = new Ship(size, x, y, vertical);
+        if (canPlaceShip(ship)) {
+          placeShip(ship);
+          placed = true;
+        }
+      }
+    }
+  }
+
+  // debugging func
+  public void printBoard() {
+    // Print column headers
+    System.out.print(" ");
+    for (int i = 0; i < width; i++) {
+      System.out.print(i + " ");
+    }
+    System.out.println();
+    for (int i = 0; i < height; i++) {
+      // Print row headers
+      System.out.print(i + "  ");
+      for (int j = 0; j < width; j++) {
+        System.out.print(grid[i][j] + " ");
+      }
+      System.out.println();
+    }
   }
 }
