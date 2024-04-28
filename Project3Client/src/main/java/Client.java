@@ -204,4 +204,9 @@ public class Client extends Thread {
   public String getUsername() {
     return this.username;
   }
+
+  public void startAI() {
+    clientMessages.PlayAI message = new clientMessages.PlayAI();
+    writeToServer(message);
+  }
 }

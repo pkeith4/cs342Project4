@@ -31,7 +31,7 @@ public class Server extends Thread {
       serverCallback.accept("Server has launched, awaiting client connections...");
 
       while (true) { // iterate infinitely looking for new socket connections
-        ClientThread client = new ClientThread(socket.accept(), clientCounter, this);
+        ClientThread client = new ClientThread(socket.accept(), clientCounter, this, false);
         serverCallback.accept("Client #" + clientCounter + " has connected!");
         clients.add(client);
         client.start();

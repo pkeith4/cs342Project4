@@ -42,6 +42,8 @@ public class StartScene {
     aiButton.setOnAction(e -> {
       PlacementScene scene = new PlacementScene(primaryStage, true, null, clientConnection);
       primaryStage.setScene(scene.getScene());
+      primaryStage.setFullScreen(true);
+      clientConnection.startAI();
     }); // Assuming PlacementScene takes Client
     Button pvpButton = new Button();
     pvpButton.setPrefSize(140, 40);

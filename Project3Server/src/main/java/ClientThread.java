@@ -1,6 +1,7 @@
 import clientMessages.*;
 import gameLogic.Coordinate;
 import gameLogic.GameState;
+import gameLogic.AIPlayer;
 import serverMessages.*;
 import serverMessages.GetQueue;
 import java.util.ArrayList;
@@ -19,11 +20,19 @@ public class ClientThread extends Thread {
   private gameLogic.Player player;
   private ClientThread opponent;
   private gameLogic.GameController gameController;
+  private boolean isAI;
+  private AIPlayer ai;
 
-  ClientThread(Socket socket, int clientCount, Server server) {
+  ClientThread(Socket socket, int clientCount, Server server, boolean isAI) {
     this.socket = socket;
     this.clientCount = clientCount;
     this.server = server;
+    this.isAI = isAI;
+
+    if(isAI) {
+      server.getServerCallback().accept("AI Thread Succesfully started");
+      instantiateAI();
+    }
   }
 
   public void run() {
@@ -39,7 +48,11 @@ public class ClientThread extends Thread {
     while (true) {
       try {
         Object obj = in.readObject();
-        handleCommand(obj);
+        if(!isAI) {
+          handleCommand(obj);
+        } else {
+          aiCommandHandler(obj);
+        }
       } catch (IOException | ClassNotFoundException e) {
         server.getServerCallback()
             .accept("Client #" + this.clientCount + " ran into an error, breaking out of read loop");
@@ -47,6 +60,41 @@ public class ClientThread extends Thread {
       }
     }
   }
+
+  private void aiCommandHandler(Object obj){
+    try {
+      if (obj instanceof clientMessages.SendBoard) {
+        // Receive the board setup from the server.
+        clientMessages.SendBoard message = (clientMessages.SendBoard) obj;
+        this.addBoard(message.getBoard());
+        if (isAI) {
+          performAIActions(); // AI decides its moves after board setup
+        }
+      } else if (obj instanceof clientMessages.Shoot) {
+        // Handle incoming shot from another player
+        clientMessages.Shoot message = (clientMessages.Shoot) obj;
+        this.shoot(message.getCoord());
+      } else if (obj instanceof clientMessages.RemoveFromQueue) {
+        // If AI needs to be removed from queue, typically not needed for AI but included for completeness
+        this.removeFromQueue();
+      } else if (obj instanceof clientMessages.PlayAI) {
+        // AI is invoked to play against another client
+        server.getServerCallback().accept("Client #" + clientCount + " is playing a game against AI.");
+        startGameAgainstAI();
+      } else {
+        server.getServerCallback().accept("AI received an unexpected command.");
+      }
+    } catch (Exception e) {
+      server.getServerCallback().accept("AI Thread had an error processing command: " + e.getMessage());
+    }
+  }
+
+  private void performAIActions() {
+    // This method is where AI processes its strategies and makes moves
+    Coordinate aiMove = this.ai.makeMove(); // Assuming AIPlayer class has a method to decide moves
+    shoot(aiMove); // AI performs a shoot based on its decision
+  }
+
 
   private void handleCommand(Object obj) {
     try {
@@ -75,6 +123,9 @@ public class ClientThread extends Thread {
         this.shoot(message.getCoord());
       } else if (obj instanceof clientMessages.RemoveFromQueue) {
         this.removeFromQueue();
+      } else if (obj instanceof clientMessages.PlayAI) {
+        server.getServerCallback().accept("Client #" + clientCount + " has started a game against the AI...");
+        startGameAgainstAI();
       } else {
         server.getServerCallback().accept("Error: Unexpected command type received.");
       }
@@ -102,11 +153,30 @@ public class ClientThread extends Thread {
       this.server.removeFromQueue(this.getUsername());
       this.server.removeFromQueue(client.getUsername());
     }
-
     this.writeToClient(new serverMessages.AcceptInvite(success, username)); // send accept invite response to the client
                                                                             // who sent accepted
     client.writeToClient(new serverMessages.AcceptInvite(success, this.username)); // send accept invite response to the
                                                                                    // client who invited
+  }
+
+
+  public void startGameAgainstAI() {
+    ClientThread AI = new ClientThread(socket, clientCount, server, true);
+    try{
+      this.sleep(5000);
+    } catch (Exception e) {
+      server.getServerCallback().accept("Error waiting for AI thread: " + e.getMessage());
+    }
+    this.gameController = new gameLogic.GameController(player, AI.getPlayer());
+    this.writeToClient(new serverMessages.SendGameReady(this.gameController.getPlayer1() == this.player));
+    removeFromQueue();
+  }
+
+  private void instantiateAI() {
+    if(isAI) {
+      this.ai = new AIPlayer();
+      server.getServerCallback().accept("AI started");
+    }
   }
 
   // shoot the shot on the board
