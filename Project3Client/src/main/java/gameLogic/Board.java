@@ -28,21 +28,18 @@ public class Board implements Serializable {
   }
 
   public boolean placeShip(Ship ship) {
-    if (canPlaceShip(ship)) {
-      ships.add(ship);
-      int x = ship.getStartX();
-      int y = ship.getStartY();
+    ships.add(ship);
+    int x = ship.getStartX();
+    int y = ship.getStartY();
 
-      for (int i = 0; i < ship.getSize(); i++) {
-        if (ship.isVertical()) {
-          grid[y + i][x] = 'S';
-        } else {
-          grid[y][x + i] = 'S';
-        }
+    for (int i = 0; i < ship.getSize(); i++) {
+      if (ship.isVertical()) {
+        grid[y + i][x] = 'S';
+      } else {
+        grid[y][x + i] = 'S';
       }
-      return true;
     }
-    return false;
+    return true;
   }
 
   public boolean canPlaceShip(Ship ship) {
@@ -96,10 +93,10 @@ public class Board implements Serializable {
     return this.ships;
   }
 
-//  used by the ai to randomly place ships
+  // used by the ai to randomly place ships
   public void intializeShips() {
-    int[] shipSizes = {2, 3, 3, 4, 5};
-    for (int size: shipSizes) {
+    int[] shipSizes = { 2, 3, 3, 4, 5 };
+    for (int size : shipSizes) {
       boolean placed = false;
       while (!placed) {
         int x = random.nextInt(10);
@@ -114,7 +111,7 @@ public class Board implements Serializable {
     }
   }
 
-//  debugging func
+  // debugging func
   public void printBoard() {
     // Print column headers
     System.out.print(" ");

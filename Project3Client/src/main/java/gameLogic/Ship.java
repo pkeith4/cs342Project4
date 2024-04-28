@@ -12,6 +12,7 @@ public class Ship implements Serializable {
   private boolean[] hits;
 
   public Ship(int size, int startX, int startY, boolean isVertical) {
+    System.out.println("size: " + size + "; x:" + startX + "; y:" + startY + "isVertical:" + isVertical);
     this.size = size;
     this.startX = startX;
     this.startY = startY;

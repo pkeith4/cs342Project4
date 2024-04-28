@@ -61,6 +61,7 @@ public class Client extends Thread {
             serverMessages.SendInvite message = (serverMessages.SendInvite) obj;
             onInviteRequestCallback.accept(message);
           } else if (obj instanceof serverMessages.Shoot) {
+            System.out.println("We got a server shoot message!!");
             serverMessages.Shoot message = (serverMessages.Shoot) obj;
             onOpponentShootCallback.accept(message);
           } else if (obj instanceof serverMessages.QueueChange) {
